@@ -818,7 +818,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9054667491587057027, guid: 9cfcd78d5b6752b46bb34e420328cbf5, type: 3}
       propertyPath: m_Materials.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9054667491587057027, guid: 9cfcd78d5b6752b46bb34e420328cbf5, type: 3}
       propertyPath: m_SelectedEditorRenderState
