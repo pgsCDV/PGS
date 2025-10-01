@@ -7,8 +7,9 @@ public class BasicNetworkManager : MonoBehaviour
         LogInto();
     }
     async void LogInto() {
+        print(SystemInfo.deviceUniqueIdentifier.Substring(0, 7));
         AuthManager.Instance.Authenticate(
-            "player_2000", "secret1224", SystemInfo.deviceUniqueIdentifier, Application.version,
+            SystemInfo.deviceUniqueIdentifier.Substring(0, 7), SystemInfo.deviceUniqueIdentifier.Substring(0, 7), SystemInfo.deviceUniqueIdentifier, Application.version,
             resp => {
                 Debug.Log($"Logged in! user_id={resp.data.user_id}, token={resp.data.token}");
 
