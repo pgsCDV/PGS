@@ -1,0 +1,17 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <Style src="project://database/Assets/Plugins/Tiny%20Giant%20Studio/Better%20Inspector/Common%20Scripts/Editor/StyleSheets/CustomFoldout.uss?fileID=7433441132597879392&amp;guid=613d348a6fe013a408e4ee1a3631e627&amp;type=3#CustomFoldout" />
+    <Style src="project://database/Assets/Plugins/Tiny%20Giant%20Studio/Better%20Inspector/Common%20Scripts/Editor/StyleSheets/Labels.uss?fileID=7433441132597879392&amp;guid=8e783b06ea75cae42a70cbd434239c92&amp;type=3#Labels" />
+    <ui:GroupBox name="TemplateRoot" class="custom-foldout" style="overflow: hidden; margin-top: 5px;">
+        <ui:GroupBox class="header" style="overflow: hidden;">
+            <ui:Toggle name="FoldoutToggle" text="Parent" value="false" tooltip="The sizes here are only calculated when this foldout is first opened. To update them, please use the refresh button." class="unity-foldout__toggle foldout-toggle" style="flex-grow: 1;" />
+            <ui:Label text="(1)" display-tooltip-when-elided="true" tooltip="Sibling Index" name="Label1" class="unimportant-information-label" />
+            <ui:Label text="(1)" display-tooltip-when-elided="true" tooltip="Sibling Index" name="Label2" class="unimportant-information-label" />
+        </ui:GroupBox>
+        <ui:GroupBox name="Content" class="content" style="flex-direction: column; display: flex; background-color: rgba(255, 255, 255, 0.02); padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;">
+            <uie:Toolbar name="EditorHeader" style="margin-left: -10px; margin-right: -10px; margin-top: -10px; margin-bottom: 0;">
+                <uie:ToolbarButton text="Ping" display-tooltip-when-elided="true" name="Ping" style="padding-left: 10px; padding-right: 10px;" />
+            </uie:Toolbar>
+            <ui:Button text="Open Editor" display-tooltip-when-elided="true" name="OpenEditorButton" style="display: flex;" />
+        </ui:GroupBox>
+    </ui:GroupBox>
+</ui:UXML>

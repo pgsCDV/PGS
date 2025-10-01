@@ -1,0 +1,11 @@
+.plus-icon {
+    background-image: var(--unity-icons-plus);
+}
+
+.menu-icon {
+    background-image: var(--unity-icons-pane_options);
+}
+
+.warning-icon {
+    background-image: var(--unity-icons-console_entry_warn);
+}

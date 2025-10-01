@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ab1fe6835e60809418d0282a074a268a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - visualTreeAsset: {fileID: 9197481963319205126, guid: e8eee4a8330502c40b42313f6a99d0b6, type: 3}
+  - folderTemplate: {fileID: 9197481963319205126, guid: ce465cbac9f131241acfd8b7127846a4, type: 3}
+  - animatedFoldoutStyleSheet: {fileID: 7433441132597879392, guid: 920070771e2f6c747b78ea05534a8a79, type: 3}
+  - originalTransform: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

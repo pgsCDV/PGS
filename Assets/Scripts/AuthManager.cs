@@ -40,8 +40,6 @@ public class AuthManager : MonoBehaviour {
 	private string currentUserId;
 	private WebSocket ws;
 	private bool isDestroyed;
-	public Text field1, field2, field3;
-	public GameObject RegistrationWindow;
 	public string GetCurrentToken() => currentToken;
 	public string GetCurrentUserId() => currentUserId;
 
@@ -144,29 +142,5 @@ public class AuthManager : MonoBehaviour {
 
 	private void OnDisable() {
 		CloseWebSocket();
-	}
-	public void RegisterField1Controller(InputField field) {
-		if (field.text.Length >= 14) field.text = field.text.Substring(0, 13);
-		if (field.text.Contains('!')) field.text = field.text.Substring(0, field.text.Length - 1);
-		field1.color = (field.text.Length <= 3 ? Color.red : Color.green);
-		field1.text = field.text.Length.ToString() + "/13";
-	}
-	public void RegisterField2Controller(InputField field) {
-		if (field.text.Length >= 10) field.text = field.text.Substring(0, 9);
-		if (field.text.Contains('!')) field.text = field.text.Substring(0, field.text.Length - 1);
-		field2.color = (field.text.Length <= 4 ? Color.red : Color.green);
-		field2.text = field.text.Length.ToString() + "/9";
-	}
-	public void RegisterField3Controller(InputField field) {
-		if (field.text.Length >= 12) field.text = field.text.Substring(0, 11);
-		if (field.text.Contains('!')) field.text = field.text.Substring(0, field.text.Length - 1);
-		field3.color = (field.text.Length <= 1 ? Color.red : Color.green);
-		field3.text = field.text.Length.ToString() + "/11";
-	}
-	public void ShowPassword(InputField inputField) {
-		inputField.contentType = (inputField.contentType == InputField.ContentType.Password ? InputField.ContentType.Standard : InputField.ContentType.Password);
-		string text = inputField.text;
-		inputField.text += "1";
-		inputField.text = text;
 	}
 }

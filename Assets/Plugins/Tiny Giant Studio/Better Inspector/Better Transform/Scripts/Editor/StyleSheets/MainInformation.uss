@@ -1,0 +1,45 @@
+.prefabOverrideMark {
+    position: absolute;
+    left: -12px;
+    top: 0;
+    width: 6px;
+    height: 21px;
+    background-color: rgb(5, 147, 224);
+}
+
+.defaultPrefabOverrideMark {
+    position: absolute;
+    left: -12px;
+    top: 0;
+    width: 6px;
+    height: 21px;
+    background-color: rgb(79, 79, 79);
+}
+
+.prefab_override_label {
+    -unity-font-style: bold;
+}
+
+.animatedField {
+    transition-property: background-color;
+    transition-duration: 0.5s;
+}
+
+.animatedField .unity-base-text-field__input {
+    background-color: rgb(23, 36, 42);
+}
+
+.animationRecordingField {
+}
+
+.animationRecordingField .unity-base-text-field__input {
+    background-color: rgb(42, 24, 23);
+}
+
+.unity-binding--animation-animated {
+    background-color: rgb(23, 36, 42);
+}
+
+.unity-binding--animation-recorded {
+    background-color: rgb(42, 24, 23);
+}

@@ -1,0 +1,115 @@
+#Settings .unity-base-field__label {
+    min-width: 200px;
+}
+
+.my-field {
+    background-color: rgba(0, 0, 0, 0);
+    transition-property: background-color;
+    transition-duration: 0.2s;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: -5px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 5px;
+    flex-direction: row;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    -unity-text-align: middle-left;
+}
+
+.my-field:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.my-field .field-label {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    flex-direction: row;
+    min-width: 59px;
+}
+
+.my-field .unity-base-field__label {
+    -unity-text-align: middle-center;
+    min-width: 5px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    margin-top: 0;
+    margin-right: 5px;
+    margin-bottom: 0;
+    margin-left: 0;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.my-field .unity-base-field__label:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.my-field .unity-vector3-field {
+    flex-shrink: 1;
+}
+
+.my-field #unity-text-input {
+}
+
+.my-field .unity-composite-field__input {
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+.toolbar-popup-field {
+    -unity-text-align: middle-left;
+    font-size: 11px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-left-color: rgba(0, 0, 0, 0.39);
+    border-right-color: rgba(0, 0, 0, 0.39);
+    border-top-color: rgba(0, 0, 0, 0.39);
+    border-bottom-color: rgba(0, 0, 0, 0.39);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    margin-right: 5px;
+}
+
+.toolbar-popup-field .unity-base-field__input {
+    -unity-text-align: middle-left;
+    font-size: 11px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.2);
+    border-right-color: rgba(0, 0, 0, 0.2);
+    border-top-color: rgba(255, 255, 255, 0.2);
+    border-bottom-color: rgba(0, 0, 0, 0.2);
+    border-top-left-radius: 1px;
+    border-top-right-radius: 1px;
+    border-bottom-right-radius: 1px;
+    border-bottom-left-radius: 1px;
+}
+
+.unity-binding--prefab-override {
+    border-left-width: 2px;
+    border-left-color: var(--unity-colors-input_field-border-focus);
+    margin-left: -4px;
+    padding-left: 5px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
