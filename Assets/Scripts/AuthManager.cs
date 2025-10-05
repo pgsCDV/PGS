@@ -34,8 +34,8 @@ public class TokenPayload {
 
 public class AuthManager : MonoBehaviour {
 	public static AuthManager Instance { get; private set; }
-	private const string ServerUrl = "https://wk19.lol:11000";
-	private const string WsUrl = "wss://wk19.lol:11000/ws";
+	private const string ServerUrl = "https://pgs.wk19.lol";
+	private const string WsUrl = "wss://pgs.wk19.lol/ws";
 	private string currentToken;
 	private string currentUserId;
 	private WebSocket ws;
