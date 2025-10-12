@@ -6,7 +6,6 @@ public class ServerDataManager {
     public int seed;
     public int mapSizeX, mapSizeY;
     public string serverAddress;
-    public string serverPassword;
 }
 
 public class MazeGame : MonoBehaviour {
