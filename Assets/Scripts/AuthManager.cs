@@ -16,7 +16,6 @@ public enum WSType : byte {
 
 [Serializable]
 public enum WSCmd : byte {
-	None,
 	LeaveRoom,
 	GetMe,
 	CreateRoom,
