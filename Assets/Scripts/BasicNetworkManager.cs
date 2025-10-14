@@ -1,212 +1,187 @@
-﻿using Newtonsoft.Json;
-using UnityEngine;
-using UnityEngine.UI;
-using System.Collections.Generic;
-using UnityEngine.InputSystem;
+﻿using UnityEngine;
+using Newtonsoft.Json;
 using System;
-using System.Linq;
-using Sirenix.Serialization;
+using System.Collections.Generic;
+using UnityEngine.UI;
 
-[System.Serializable]
+[Serializable]
 public class ServerData {
-    public string name;
-    public string uid;
-    public int curr_users;
-    public int max_users;
-    public int seed;
-    public bool is_favorite;
-    public int mapSizeX, mapSizeY;
+	public string name;
+	public string uid;
+	public int curr_users;
+	public int max_users;
+	public int seed;
+	public bool is_favorite;
+	public int mapSizeX, mapSizeY;
 }
 
-[System.Serializable]
-public struct WsMessage<T> {
-	[JsonProperty("status")]
-	public string StatusString { get; set; }
-
-	[JsonIgnore]
-	public WSType Status {
-		get {
-			if (Enum.TryParse(StatusString, true, out WSType result))
-				return result;
-			return WSType.Unknown;
-		}
-	}
-
-	[JsonIgnore]
-	public WSCmd Cmd { get; set; }
-
-	[JsonProperty("room_id")]
-	public string RoomId { get; set; }
-
-	[JsonProperty("username")]
-	public string Username { get; set; }
-
-	[JsonProperty("user_id")]
-	public string UserId { get; set; }
-
-	[JsonProperty("data")]
-	public T Data { get; set; }
-
-	[JsonProperty("rooms")]
-	public Dictionary<string, object> Rooms { get; set; }
-
-	[JsonProperty("conf")]
-	public Dictionary<string, object> Conf { get; set; }
+[Serializable]
+public struct NetMessage {
+	[JsonProperty("status")] public string Status;
+	[JsonProperty("cmd")] public string Cmd;
+	[JsonProperty("room_id")] public string RoomId;
+	[JsonProperty("username")] public string Username;
+	[JsonProperty("user_id")] public string UserId;
+	[JsonProperty("data")] public Dictionary<string, object> Data;
+	[JsonProperty("rooms")] public Dictionary<string, object> Rooms;
+	[JsonProperty("conf")] public Dictionary<string, object> Conf;
+	[JsonProperty("error")] public string Error;
 }
+
+public enum NetCmd { CreateRoom, JoinRoom, LeaveRoom, GetRooms }
 
 public class BasicNetworkManager : MonoBehaviour {
 	string currentRoomId;
-	private InputSystem_Actions inputActions;
-
-	static readonly Dictionary<WSCmd, string> CmdMap = new Dictionary<WSCmd, string> {
-		{ WSCmd.LeaveRoom, "leave_room" },
-		{ WSCmd.GetMe, "get_me" },
-		{ WSCmd.CreateRoom, "create_room" },
-		{ WSCmd.GetRooms, "get_rooms" }
-	};
-	public InputField server_name;
-	public Slider server_slots;
-	public InputField server_password;
-	public Dropdown server_map_type;
 	public InputField server_seed;
+	public GameObject serverEntryPrefab;
+	public Transform contentParent;
+	public Dictionary<string, ServerData> serverDict = new();
 
+	static readonly Dictionary<NetCmd, string> CmdMap = new() {
+		{ NetCmd.LeaveRoom, "leave_room" },
+		{ NetCmd.GetRooms, "get_rooms" },
+		{ NetCmd.CreateRoom, "create_room" },
+		{ NetCmd.JoinRoom, "join_room" }
+	};
 
-    public GameObject serverEntryPrefab;
-    public Transform contentParent;
-
-    public ServerData[] allServers;
-    [OdinSerialize] public Dictionary<string, ServerData> serverDict;
-
-    private void Awake() {        
-		inputActions = new InputSystem_Actions();
-	}
 	void Start() => LogInto();
 
-	private void OnEnable() {
-		inputActions.Player.Sprint.performed += OnSprintPerf;
-		inputActions.Player.Enable();
-	}
-
-	private void OnDisable() {
-		inputActions.Player.Sprint.performed -= OnSprintPerf;
-		inputActions.Player.Disable();
-	}
-
-	void SendCommand(WSCmd cmd, object extraFields = null) {
-		if (!CmdMap.ContainsKey(cmd)) return;
-		var baseMsg = new Dictionary<string, object> { { "cmd", CmdMap[cmd] } };
-		if (extraFields != null) {
-			foreach (var field in extraFields.GetType().GetFields()) {
-				baseMsg[field.Name] = field.GetValue(extraFields);
-			}
-			foreach (var prop in extraFields.GetType().GetProperties()) {
-				if (prop.CanRead)
-					baseMsg[prop.Name] = prop.GetValue(extraFields);
-			}
-		}
-		AuthManager.Instance.SendWSMsg(JsonConvert.SerializeObject(baseMsg));
-	}
-
-	void OnSprintPerf(InputAction.CallbackContext context) {
-		SendCommand(WSCmd.LeaveRoom, new { RoomId = currentRoomId });
-	}
-
-	async void LogInto() {
+	void LogInto() {
 		AuthManager.Instance.Authenticate(
 			SystemInfo.deviceUniqueIdentifier.Substring(3, 12),
 			SystemInfo.deviceUniqueIdentifier.Substring(0, 10),
 			SystemInfo.deviceUniqueIdentifier,
 			Application.version,
 			resp => {
-				Debug.Log($"Logged in! user_id={resp.data.user_id}, token={resp.data.token}");
-
 				AuthManager.Instance.ConnectWebSocket(
-					onOpen: () => {
-						//Debug.Log("WS opened");
-					},
-					onMessage: msg => {
-						//Debug.Log($"new msg: [{Time.frameCount}] {Time.time} " + msg);
-
-						var parsed = JsonConvert.DeserializeObject<WsMessage<Dictionary<string, object>>>(msg);
-						switch (parsed.Status) {
-							case WSType.Connected:
-								SendCommand(WSCmd.GetMe);
-								SendCommand(WSCmd.CreateRoom);
-								break;
-							case WSType.Success:
-								if (!string.IsNullOrEmpty(parsed.RoomId)) {
-									currentRoomId = parsed.RoomId;
-									Debug.Log("Room created, id = " + currentRoomId);
-									SendCommand(WSCmd.GetRooms);
-								}
-								break;
-							case WSType.ConnectCallback:
-								break;
-							default:
-								break;
-						}
-					},
-					onError: err => {
-						Debug.LogError("Error WS: " + err);
-					},
-					onClose: code => {
-						Debug.Log("WS closed: " + code);
-					}
+					onOpen: () => { },
+					onMessage: OnMessage,
+					onError: err => Debug.LogError("Auth WS Error: " + err),
+					onClose: code => Debug.Log("WS closed: " + code)
 				);
 			},
-			err => {
-				Debug.LogError("Auth failed: " + err);
-			}
+			err => Debug.LogError("Auth failed: " + err)
 		);
 	}
+
+	void OnMessage(string msg) {
+		var parsed = JsonConvert.DeserializeObject<NetMessage>(msg);
+		var status = (parsed.Status ?? "").ToLower();
+
+		switch (status) {
+			case "connected":
+				SendCommand(NetCmd.GetRooms);
+				break;
+
+			case "success":
+				if (parsed.Cmd == "create_room") {
+					currentRoomId = parsed.RoomId;
+					Debug.Log("Room created: " + currentRoomId);
+					SendCommand(NetCmd.JoinRoom, new { room_id = currentRoomId });
+				}
+				else if (parsed.Cmd == "join_room") {
+					currentRoomId = parsed.RoomId;
+					Debug.Log("Joined room: " + currentRoomId);
+
+					if (parsed.Conf != null) {
+						int seed = parsed.Conf.ContainsKey("seed") ? Convert.ToInt32(parsed.Conf["seed"]) : 0;
+						int max = parsed.Conf.ContainsKey("max_players") ? Convert.ToInt32(parsed.Conf["max_players"]) : 10;
+						MazeGame.manager = new ServerDataManager {
+							seed = seed,
+							mapSizeX = max * 5,
+							mapSizeY = max * 5,
+							serverAddress = currentRoomId
+						};
+						UnityEngine.SceneManagement.SceneManager.LoadScene("MazeScene");
+					}
+				}
+				else if (parsed.Cmd == "get_rooms" && parsed.Rooms != null) {
+					var serverList = new List<ServerData>();
+					foreach (var kv in parsed.Rooms) {
+						var roomId = kv.Key;
+						var roomJson = kv.Value.ToString();
+						var roomDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(roomJson);
+						var confJson = roomDict.ContainsKey("match_conf") ? roomDict["match_conf"].ToString() : "{}";
+						var conf = JsonConvert.DeserializeObject<Dictionary<string, object>>(confJson);
+						var playersJson = roomDict.ContainsKey("active_players") ? roomDict["active_players"].ToString() : "{}";
+						var players = JsonConvert.DeserializeObject<Dictionary<string, object>>(playersJson);
+						serverList.Add(new ServerData {
+							name = roomId,
+							uid = roomId,
+							curr_users = players.Count,
+							max_users = conf.ContainsKey("max_players") ? Convert.ToInt32(conf["max_players"]) : 0,
+							seed = conf.ContainsKey("seed") ? Convert.ToInt32(conf["seed"]) : 0,
+							mapSizeX = 10,
+							mapSizeY = 10
+						});
+					}
+					PopulateServerList(serverList.ToArray());
+				}
+				break;
+
+			case "room_deleted":
+				Debug.Log("Room deleted: " + parsed.RoomId);
+				if (parsed.RoomId == currentRoomId) currentRoomId = null;
+				SendCommand(NetCmd.GetRooms);
+				break;
+
+			case "error":
+				Debug.LogError("Server error: " + parsed.Error);
+				break;
+		}
+	}
+
+	public void SendCommand(NetCmd cmd, object extra = null) {
+		if (!CmdMap.ContainsKey(cmd)) return;
+		var payload = new Dictionary<string, object> { { "cmd", CmdMap[cmd] } };
+		if (extra != null) payload["data"] = extra;
+		AuthManager.Instance.SendWSMsg(JsonConvert.SerializeObject(payload));
+	}
+
 	public void CreateServerRequest() {
 		if (!AuthManager.Instance.IsSocketActive) return;
-		if (server_name.text.Length <= 0) return;
 		if (server_seed.text.Length <= 0) return;
-
+		int.TryParse(server_seed.text, out int parsedSeed);
 		var payload = new {
-			cmd = CmdMap[WSCmd.CreateRoom],
-			name = server_name.text,
-			max_users = Mathf.RoundToInt(server_slots.value),
-			password = server_password.text,
-			seed = int.TryParse(server_seed.text, out int parsedSeed) ? parsedSeed : 0
+			seed = parsedSeed
 		};
+		SendCommand(NetCmd.CreateRoom, payload);
+	}
 
-		string json = JsonConvert.SerializeObject(payload);
-		server_name.text = "";
-		//server_seed.text = "";
-		AuthManager.Instance.SendWSMsg(json);
-    }
-    public void ConnectToServer(string serv_uid) {
-        if (serverDict != null && serverDict.TryGetValue(serv_uid, out var server)) {
-            MazeGame.manager.seed = server.seed;
-            MazeGame.manager.mapSizeX = server.mapSizeX;
-            MazeGame.manager.mapSizeY = server.mapSizeY;
-            //SendWSRequest($"connect_{serv_uid}");
-        }
-    }
+	public void LeaveCurrentRoom() {
+		if (!AuthManager.Instance.IsSocketActive) return;
+		if (string.IsNullOrEmpty(currentRoomId)) return;
+		SendCommand(NetCmd.LeaveRoom, new { room_id = currentRoomId });
+		currentRoomId = null;
+	}
 
-    void PopulateServerList(ServerData[] servers) {
+	public void RefreshRooms() => SendCommand(NetCmd.GetRooms);
 
-        foreach (Transform child in contentParent) Destroy(child.gameObject);
+	void PopulateServerList(ServerData[] servers) {
+		foreach (Transform child in contentParent) Destroy(child.gameObject);
+		if (servers != null && servers.Length > 0) {
+			serverDict.Clear();
+			foreach (var s in servers) {
+				serverDict[s.uid] = s;
+				var e = Instantiate(serverEntryPrefab, contentParent).transform;
+				e.GetChild(1).GetComponent<Text>().text = s.name;
+				e.GetChild(2).GetComponent<Text>().text = $"{s.curr_users}/{s.max_users}";
+				string uid = s.uid;
+				e.GetChild(3).GetComponent<Button>().onClick.AddListener(() => ConnectToServer(uid));
+			}
+		}
+		else {
+			var e = Instantiate(serverEntryPrefab, contentParent).transform;
+			e.GetChild(0).gameObject.SetActive(false);
+			e.GetChild(1).GetComponent<Text>().text = "Empty server list!";
+			e.GetChild(2).GetComponent<Text>().text = "";
+		}
+	}
 
-        if (servers?.Length > 0) {
-            serverDict = servers.ToDictionary(s => s.uid, s => s);
-            foreach (var s in serverDict.Values) {
-                var e = Instantiate(serverEntryPrefab, contentParent).transform;
-                //e.GetChild(0).GetComponent<Image>().sprite = s.pass ? passwordOnSprite : passwordOffSprite;
-                e.GetChild(1).GetComponent<Text>().text = s.name;
-                e.GetChild(2).GetComponent<Text>().text = $"{s.curr_users}/{s.max_users}";
-                e.GetChild(3).GetComponent<Button>().onClick.AddListener(() => ConnectToServer(s.uid));
-            }
-        }
-        else {
-            var e = Instantiate(serverEntryPrefab, contentParent).transform;
-            e.GetChild(0).GetComponent<Image>().gameObject.SetActive(false);
-            e.GetChild(1).GetComponent<Text>().text = "Empty server list!";
-            e.GetChild(2).GetComponent<Text>().text = "";
-            e.GetChild(2).GetChild(0).GetComponent<Text>().text = "";
-        }
-    }
-
+	public void ConnectToServer(string serv_uid) {
+		if (serverDict.TryGetValue(serv_uid, out var server)) {
+			currentRoomId = serv_uid;
+			SendCommand(NetCmd.JoinRoom, new { room_id = serv_uid });
+		}
+	}
 }
