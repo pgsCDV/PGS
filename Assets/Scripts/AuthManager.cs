@@ -19,7 +19,9 @@ public enum WSCmd : byte {
 	LeaveRoom,
 	GetMe,
 	CreateRoom,
-	GetRooms
+	JoinRoom,
+	GetRooms,
+	Ping
 }
 
 [Serializable]
@@ -145,9 +147,9 @@ public class AuthManager : MonoBehaviour {
 			if (autoReconnectEnabled && Application.isPlaying) TryReconnect(onOpen, onMessage, onError, onClose);
 		};
 
-		ws.OnCloseReason += (code, reason) => {
+		ws.OnClose += (code) => {
 			if (isDestroyed) return;
-			Debug.Log($"[WS] [{Time.time}|{Time.frameCount}] - Closed: {code} | {reason}");
+			Debug.Log($"[WS] [{Time.time}|{Time.frameCount}] - Closed: {code}");
 			onClose?.Invoke(code);
 			if (autoReconnectEnabled && Application.isPlaying) TryReconnect(onOpen, onMessage, onError, onClose);
 		};

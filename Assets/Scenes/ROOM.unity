@@ -150,11 +150,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CellWidth: 5
   CellHeight: 5
-  AddGaps: 1
-  Floor: {fileID: 0}
-  Wall: {fileID: 0}
-  Pillar: {fileID: 0}
-  GoalPrefab: {fileID: 0}
+  AddGaps: 0
+  Floor: {fileID: 165842, guid: 03eaa1c00f1c640488fb58126d1ccd7f, type: 3}
+  Wall: {fileID: 144206, guid: f59ffe6da9a50934ea8b1b18955e9009, type: 3}
+  Pillar: {fileID: 142476, guid: ebb389c5a08282b46a7781cda85523de, type: 3}
+  GoalPrefab: {fileID: 6008302062850747515, guid: 9cfcd78d5b6752b46bb34e420328cbf5, type: 3}
 --- !u!4 &241595822
 Transform:
   m_ObjectHideFlags: 0
