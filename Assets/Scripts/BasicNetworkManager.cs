@@ -92,10 +92,11 @@ public class BasicNetworkManager : MonoBehaviour {
 						if (parsed.Conf != null) {
 							int seed = parsed.Conf.ContainsKey("seed") ? Convert.ToInt32(parsed.Conf["seed"]) : 0;
 							int max = parsed.Conf.ContainsKey("max_players") ? Convert.ToInt32(parsed.Conf["max_players"]) : 2;
-							MazeGame.manager = new ServerDataManager {
+							MazeGame.manager = new ServerDataManager
+							{
 								seed = seed,
-								mapSizeX = 10,
-								mapSizeY = 10,
+								mapSizeX = 100,
+								mapSizeY = 100,
 								serverAddress = currentRoomId
 							};
 							UnityEngine.SceneManagement.SceneManager.LoadScene("ROOM");

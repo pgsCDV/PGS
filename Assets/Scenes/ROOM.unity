@@ -148,8 +148,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b97941d2bc4435649b89ab89b3c04f70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CellWidth: 5
-  CellHeight: 5
+  CellWidth: 4
+  CellHeight: 4
   AddGaps: 0
   Floor: {fileID: 165842, guid: 03eaa1c00f1c640488fb58126d1ccd7f, type: 3}
   Wall: {fileID: 144206, guid: f59ffe6da9a50934ea8b1b18955e9009, type: 3}
