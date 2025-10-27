@@ -20,9 +20,14 @@ public class MazeGame : MonoBehaviour {
 	[Header("Prefabs")]
 	public GameObject Floor, Wall, Pillar, GoalPrefab;
 
+	[Header("Spawn Positions")]
+	public Transform pos1;
+	public Transform pos2;
+	public Transform pos3;
+
 	private MazeCell[,] maze;
-	int Rows = manager.mapSizeX;
-	int Columns = manager.mapSizeY;
+	int Rows;
+	int Columns;
 
 	private enum Direction { Right, Front, Left, Back }
 	private struct MazeCell {
@@ -33,15 +38,22 @@ public class MazeGame : MonoBehaviour {
 
 	void Awake() {
 		Instance = this;
-		print($"{Rows} {Columns}");
-	}
-	private void Start() {
-		GenerateMaze();
-		SpawnMaze();
+		Rows = manager.mapSizeX;
+		Columns = manager.mapSizeY;
 	}
 
-	void GenerateMaze() {
-		Random.InitState(manager.seed);
+	private void Start() {
+		GenerateAndSpawnAll();
+	}
+
+	void GenerateAndSpawnAll() {
+		GenerateAndSpawnMaze(manager.seed, pos1);
+		GenerateAndSpawnMaze(manager.seed + 1, pos2);
+		GenerateAndSpawnMaze(manager.seed + 2, pos3);
+	}
+
+	void GenerateAndSpawnMaze(int seed, Transform parent) {
+		Random.InitState(seed);
 		maze = new MazeCell[Rows, Columns];
 
 		for (int r = 0; r < Rows; r++) {
@@ -92,6 +104,7 @@ public class MazeGame : MonoBehaviour {
 		var goal = new Vector2Int(Random.Range(0, Rows), Random.Range(0, Columns));
 		maze[goal.x, goal.y].IsGoal = true;
 		Random.InitState((int)System.DateTime.Now.Ticks);
+		SpawnMaze(parent);
 	}
 
 	void RemoveWall(Vector2Int a, Vector2Int b, Direction dir) {
@@ -115,12 +128,12 @@ public class MazeGame : MonoBehaviour {
 		}
 	}
 
-	void SpawnMaze() {
-		float gap = AddGaps ? 0.2f : 0;
+	void SpawnMaze(Transform parent) {
+		float gap = AddGaps ? 0.2f : 0f;
 
-		GameObject floorPlane = Instantiate(Floor);
-		floorPlane.transform.position = new Vector3((Columns - 1) * (CellWidth + gap) / 2, 0, (Rows - 1) * (CellHeight + gap) / 2);
-		floorPlane.transform.localScale = new Vector3((Columns * (CellWidth + gap)) / 10f, 1, (Rows * (CellHeight + gap)) / 10f);
+		GameObject floorPlane = Instantiate(Floor, parent);
+		floorPlane.transform.localPosition = new Vector3((Columns - 1) * (CellWidth + gap) / 2f, 0f, (Rows - 1) * (CellHeight + gap) / 2f);
+		floorPlane.transform.localScale = new Vector3((Columns * (CellWidth + gap)) / 10f, 1f, (Rows * (CellHeight + gap)) / 10f);
 
 		for (int row = 0; row < Rows; row++) {
 			for (int col = 0; col < Columns; col++) {
@@ -128,44 +141,47 @@ public class MazeGame : MonoBehaviour {
 				float z = row * (CellHeight + gap);
 				MazeCell cell = maze[row, col];
 
-				if (cell.WallRight)
-					Instantiate(Wall, new Vector3(x + CellWidth / 2, 0, z), Quaternion.Euler(0, 90, 0), transform);
+				if (cell.WallRight) {
+					GameObject w = Instantiate(Wall, parent);
+					w.transform.localPosition = new Vector3(x + CellWidth / 2f, 0f, z);
+					w.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+				}
 
-				if (cell.WallFront)
-					Instantiate(Wall, new Vector3(x, 0, z + CellHeight / 2), Quaternion.identity, transform);
+				if (cell.WallFront) {
+					GameObject w = Instantiate(Wall, parent);
+					w.transform.localPosition = new Vector3(x, 0f, z + CellHeight / 2f);
+					w.transform.localRotation = Quaternion.identity;
+				}
 
-				if (cell.WallLeft && col == 0)
-					Instantiate(Wall, new Vector3(x - CellWidth / 2, 0, z), Quaternion.Euler(0, 270, 0), transform);
+				if (cell.WallLeft && col == 0) {
+					GameObject w = Instantiate(Wall, parent);
+					w.transform.localPosition = new Vector3(x - CellWidth / 2f, 0f, z);
+					w.transform.localRotation = Quaternion.Euler(0f, 270f, 0f);
+				}
 
-				if (cell.WallBack && row == 0)
-					Instantiate(Wall, new Vector3(x, 0, z - CellHeight / 2), Quaternion.Euler(0, 180, 0), transform);
+				if (cell.WallBack && row == 0) {
+					GameObject w = Instantiate(Wall, parent);
+					w.transform.localPosition = new Vector3(x, 0f, z - CellHeight / 2f);
+					w.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+				}
 
-				if (cell.IsGoal && GoalPrefab != null)
-					Instantiate(GoalPrefab, new Vector3(x, 0.1f, z), Quaternion.identity, transform);
+				if (cell.IsGoal && GoalPrefab != null) {
+					GameObject g = Instantiate(GoalPrefab, parent);
+					g.transform.localPosition = new Vector3(x, 0.1f, z);
+					g.transform.localRotation = Quaternion.identity;
+				}
 			}
 		}
 
 		if (Pillar != null) {
 			for (int row = 0; row <= Rows; row++) {
 				for (int col = 0; col <= Columns; col++) {
-					float x = col * (CellWidth + gap) - CellWidth / 2;
-					float z = row * (CellHeight + gap) - CellHeight / 2;
-					Instantiate(Pillar, new Vector3(x, 0, z), Quaternion.identity, transform);
+					float x = col * (CellWidth + gap) - CellWidth / 2f;
+					float z = row * (CellHeight + gap) - CellHeight / 2f;
+					GameObject p = Instantiate(Pillar, parent);
+					p.transform.localPosition = new Vector3(x, 0f, z);
+					p.transform.localRotation = Quaternion.identity;
 				}
-			}
-		}
-	}
-
-	public static Vector3 GetRandomEmptyCellWorldPositionStatic() {
-		if (Instance == null || Instance.maze == null) return Vector3.zero;
-		while (true) {
-			int row = Random.Range(0, Instance.Rows);
-			int col = Random.Range(0, Instance.Columns);
-			if (Instance.maze[row, col].Visited) {
-				float gap = Instance.AddGaps ? 0.2f : 0f;
-				float x = col * (Instance.CellWidth + gap);
-				float z = row * (Instance.CellHeight + gap);
-				return new Vector3(x, 0.3f, z);
 			}
 		}
 	}
