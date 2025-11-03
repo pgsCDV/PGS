@@ -48,7 +48,7 @@ public class BasicNetworkManager : MonoBehaviour {
 
 	void LogInto() {
 		AuthManager.Instance.Authenticate(
-			SystemInfo.deviceUniqueIdentifier.Substring(3, 12)+Application.isEditor,
+			SystemInfo.deviceUniqueIdentifier.Substring(3, 12)+Application.isEditor+Application.isPlaying,
 			SystemInfo.deviceUniqueIdentifier.Substring(0, 10)+Application.isEditor,
 			SystemInfo.deviceUniqueIdentifier,
 			Application.version,
