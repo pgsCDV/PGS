@@ -42,8 +42,7 @@ public class BasicNetworkManager : MonoBehaviour {
 		{ WSCmd.GetRooms, "get_rooms" },
 		{ WSCmd.CreateRoom, "create_room" },
 		{ WSCmd.GetMe, "get_me" },
-		{ WSCmd.JoinRoom, "join_room" },
-		{ WSCmd.Ping, "ping" }
+		{ WSCmd.JoinRoom, "join_room" }
 	};
 
 	void Start() => LogInto();
@@ -134,9 +133,6 @@ public class BasicNetworkManager : MonoBehaviour {
 
 			case "error":
 				Debug.LogError("Server error: " + parsed.Error);
-				break;
-
-			case "pong":
 				break;
 		}
 	}

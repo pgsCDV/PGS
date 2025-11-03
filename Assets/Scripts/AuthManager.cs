@@ -20,8 +20,7 @@ public enum WSCmd : byte {
 	GetMe,
 	CreateRoom,
 	JoinRoom,
-	GetRooms,
-	Ping
+	GetRooms
 }
 
 [Serializable]
