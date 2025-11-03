@@ -3,7 +3,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UI;
-using System.Collections;
 
 [Serializable]
 public class ServerData {
@@ -51,8 +50,8 @@ public class BasicNetworkManager : MonoBehaviour {
 
 	void LogInto() {
 		AuthManager.Instance.Authenticate(
-			SystemInfo.deviceUniqueIdentifier.Substring(3, 12),
-			SystemInfo.deviceUniqueIdentifier.Substring(0, 10),
+			SystemInfo.deviceUniqueIdentifier.Substring(3, 12)+Application.isEditor,
+			SystemInfo.deviceUniqueIdentifier.Substring(0, 10)+Application.isEditor,
 			SystemInfo.deviceUniqueIdentifier,
 			Application.version,
 			resp => {
@@ -74,7 +73,6 @@ public class BasicNetworkManager : MonoBehaviour {
 		switch (status) {
 			case "connected":
 				SendCommand(WSCmd.GetRooms);
-				StartCoroutine(PingCoroutine());
 				break;
 
 			case "success":
@@ -143,18 +141,6 @@ public class BasicNetworkManager : MonoBehaviour {
 		}
 	}
 
-	IEnumerator PingCoroutine() {
-		while (true) {
-			yield return new WaitForSeconds(4f);
-			if (AuthManager.Instance.IsSocketActive) {
-				SendCommand(WSCmd.Ping);
-			}
-			else {
-				yield break;
-			}
-		}
-	}
-
 	public void SendCommand(WSCmd cmd, object extra = null) {
 		if (!CmdMap.ContainsKey(cmd)) return;
 		var payload = new Dictionary<string, object> { { "cmd", CmdMap[cmd] } };
@@ -183,6 +169,7 @@ public class BasicNetworkManager : MonoBehaviour {
 	public void RefreshRooms() => SendCommand(WSCmd.GetRooms);
 
 	void PopulateServerList(ServerData[] servers) {
+		if (currentRoomId != null) return;
 		foreach (Transform child in contentParent) Destroy(child.gameObject);
 		if (servers != null && servers.Length > 0) {
 			serverDict.Clear();

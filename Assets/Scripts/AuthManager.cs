@@ -40,9 +40,7 @@ public struct MeResponse {
 
 [Serializable]
 public struct LoginData {
-	public string user_id;
-	public string token;
-	public string expires;
+	public string user_id, token, expires;
 }
 
 [Serializable]
@@ -53,15 +51,15 @@ public struct TokenPayload {
 public class AuthManager : MonoBehaviour {
 	public static AuthManager Instance { get; private set; }
 
-	private const string ServerUrl = "https://pgs.wk19.lol";
-	private const string WsUrl = "wss://pgs.wk19.lol/ws";
-	private string currentToken;
-	private string currentUserId;
-	private WebSocket ws;
-	private bool isDestroyed;
-	private bool autoReconnectEnabled = true;
-	private float reconnectDelay = 3f;
-	private Coroutine reconnectRoutine;
+	const string ServerUrl = "https://pgs.wk19.lol";
+	const string WsUrl = "wss://pgs.wk19.lol/ws";
+	string currentToken, currentUserId;
+	WebSocket ws;
+	bool isDestroyed, autoReconnectEnabled = true;
+	float reconnectDelay = 4f;
+	Coroutine reconnectRoutine;
+
+	public int playerSpawnID;
 
 	public string GetCurrentToken() => currentToken;
 	public string GetCurrentUserId() => currentUserId;
