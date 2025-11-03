@@ -58,7 +58,7 @@ public class AuthManager : MonoBehaviour {
 	float reconnectDelay = 4f;
 	Coroutine reconnectRoutine;
 
-	public int playerSpawnID;
+	public int side;
 
 	public string GetCurrentToken() => currentToken;
 	public string GetCurrentUserId() => currentUserId;

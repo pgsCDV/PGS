@@ -12,7 +12,6 @@ public class ServerData {
 	public int max_users;
 	public int seed;
 	public bool is_favorite;
-	public int mapSizeX, mapSizeY;
 }
 
 [Serializable]
@@ -91,8 +90,6 @@ public class BasicNetworkManager : MonoBehaviour {
 							int max = parsed.Conf.ContainsKey("max_players") ? Convert.ToInt32(parsed.Conf["max_players"]) : 2;
 							MazeGame.manager = new ServerDataManager {
 								seed = seed,
-								mapSizeX = 10,//WHEN CREATE NEW SERVER
-								mapSizeY = 10,//WHEN CREATE NEW SERVER
 								serverAddress = currentRoomId
 							};
 							UnityEngine.SceneManagement.SceneManager.LoadScene("ROOM");
@@ -114,9 +111,7 @@ public class BasicNetworkManager : MonoBehaviour {
 								uid = roomId,
 								curr_users = players.Count,
 								max_users = conf.ContainsKey("max_players") ? Convert.ToInt32(conf["max_players"]) : 0,
-								seed = conf.ContainsKey("seed") ? Convert.ToInt32(conf["seed"]) : 0,
-								mapSizeX = conf.ContainsKey("map_x") ? Convert.ToInt32(conf["map_x"]) : 4,
-								mapSizeY = conf.ContainsKey("map_y") ? Convert.ToInt32(conf["map_y"]) : 4
+								seed = conf.ContainsKey("seed") ? Convert.ToInt32(conf["seed"]) : 0
 							});
 						}
 						PopulateServerList(serverList.ToArray());

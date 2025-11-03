@@ -4,7 +4,6 @@ using System.Collections.Generic;
 [System.Serializable]
 public class ServerDataManager {
 	public int seed;
-	public int mapSizeX, mapSizeY;
 	public string serverAddress;
 }
 
@@ -26,8 +25,6 @@ public class MazeGame : MonoBehaviour {
 	public Transform pos3;
 
 	private MazeCell[,] maze;
-	int Rows;
-	int Columns;
 
 	private enum Direction { Right, Front, Left, Back }
 	private struct MazeCell {
@@ -38,8 +35,6 @@ public class MazeGame : MonoBehaviour {
 
 	void Awake() {
 		Instance = this;
-		Rows = manager.mapSizeX;
-		Columns = manager.mapSizeY;
 	}
 
 	private void Start() {
@@ -47,17 +42,17 @@ public class MazeGame : MonoBehaviour {
 	}
 
 	void GenerateAndSpawnAll() {
-		GenerateAndSpawnMaze(manager.seed, pos1);
-		GenerateAndSpawnMaze(manager.seed + 1, pos2);
-		GenerateAndSpawnMaze(manager.seed + 2, pos3);
+		GenerateAndSpawnMaze(manager.seed, pos1, new (8,8));
+		GenerateAndSpawnMaze(manager.seed + 1, pos2, new(8, 8));
+		GenerateAndSpawnMaze(manager.seed + 2, pos3, new(8, 8));
 	}
 
-	void GenerateAndSpawnMaze(int seed, Transform parent) {
+	void GenerateAndSpawnMaze(int seed, Transform parent, Vector2Int size) {
 		Random.InitState(seed);
-		maze = new MazeCell[Rows, Columns];
+		maze = new MazeCell[size.x, size.y];
 
-		for (int r = 0; r < Rows; r++) {
-			for (int c = 0; c < Columns; c++) {
+		for (int r = 0; r < size.x; r++) {
+			for (int c = 0; c < size.y; c++) {
 				maze[r, c] = new MazeCell {
 					WallRight = true,
 					WallLeft = true,
@@ -69,7 +64,7 @@ public class MazeGame : MonoBehaviour {
 		}
 
 		Stack<Vector2Int> stack = new Stack<Vector2Int>();
-		Vector2Int start = new Vector2Int(Random.Range(0, Rows), Random.Range(0, Columns));
+		Vector2Int start = new Vector2Int(Random.Range(0, size.x), Random.Range(0, size.y));
 		maze[start.x, start.y].Visited = true;
 		stack.Push(start);
 
@@ -84,7 +79,7 @@ public class MazeGame : MonoBehaviour {
 				(Direction.Back, new Vector2Int(-1, 0))
 			}) {
 				Vector2Int neighbor = current + offset;
-				if (neighbor.x >= 0 && neighbor.x < Rows && neighbor.y >= 0 && neighbor.y < Columns &&
+				if (neighbor.x >= 0 && neighbor.x < size.x && neighbor.y >= 0 && neighbor.y < size.y &&
 					!maze[neighbor.x, neighbor.y].Visited) {
 					unvisitedNeighbors.Add((dir, neighbor));
 				}
@@ -101,10 +96,10 @@ public class MazeGame : MonoBehaviour {
 			}
 		}
 
-		var goal = new Vector2Int(Random.Range(0, Rows), Random.Range(0, Columns));
+		var goal = new Vector2Int(Random.Range(0, size.x), Random.Range(0, size.y));
 		maze[goal.x, goal.y].IsGoal = true;
 		Random.InitState((int)System.DateTime.Now.Ticks);
-		SpawnMaze(parent);
+		SpawnMaze(parent, size);
 	}
 
 	void RemoveWall(Vector2Int a, Vector2Int b, Direction dir) {
@@ -128,15 +123,15 @@ public class MazeGame : MonoBehaviour {
 		}
 	}
 
-	void SpawnMaze(Transform parent) {
+	void SpawnMaze(Transform parent, Vector2Int size) {
 		float gap = AddGaps ? 0.2f : 0f;
 
 		GameObject floorPlane = Instantiate(Floor, parent);
-		floorPlane.transform.localPosition = new Vector3((Columns - 1) * (CellWidth + gap) / 2f, 0f, (Rows - 1) * (CellHeight + gap) / 2f);
-		floorPlane.transform.localScale = new Vector3((Columns * (CellWidth + gap)) / 10f, 1f, (Rows * (CellHeight + gap)) / 10f);
+		floorPlane.transform.localPosition = new Vector3((size.y - 1) * (CellWidth + gap) / 2f, 0f, (size.x - 1) * (CellHeight + gap) / 2f);
+		floorPlane.transform.localScale = new Vector3((size.y * (CellWidth + gap)) / 10f, 1f, (size.x * (CellHeight + gap)) / 10f);
 
-		for (int row = 0; row < Rows; row++) {
-			for (int col = 0; col < Columns; col++) {
+		for (int row = 0; row < size.x; row++) {
+			for (int col = 0; col < size.y; col++) {
 				float x = col * (CellWidth + gap);
 				float z = row * (CellHeight + gap);
 				MazeCell cell = maze[row, col];
@@ -174,8 +169,8 @@ public class MazeGame : MonoBehaviour {
 		}
 
 		if (Pillar != null) {
-			for (int row = 0; row <= Rows; row++) {
-				for (int col = 0; col <= Columns; col++) {
+			for (int row = 0; row <= size.x; row++) {
+				for (int col = 0; col <= size.y; col++) {
 					float x = col * (CellWidth + gap) - CellWidth / 2f;
 					float z = row * (CellHeight + gap) - CellHeight / 2f;
 					GameObject p = Instantiate(Pillar, parent);
