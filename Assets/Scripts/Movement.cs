@@ -1,6 +1,4 @@
 using UnityEngine;
-
-[RequireComponent(typeof(CharacterController))]
 public class Movement : MonoBehaviour
 {
     public float speed = 5f;
