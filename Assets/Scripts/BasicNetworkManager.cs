@@ -4,30 +4,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
-[Serializable]
-public class ServerData {
-	public string name;
-	public string uid;
-	public int curr_users;
-	public int max_users;
-	public int seed;
-	public bool is_favorite;
-}
-
-[Serializable]
-public struct NetMessage {
-	[JsonProperty("status")] public string Status;
-	[JsonProperty("cmd")] public string Cmd;
-	[JsonProperty("room_id")] public string RoomId;
-	[JsonProperty("username")] public string Username;
-	[JsonProperty("user_id")] public string UserId;
-	[JsonProperty("data")] public Dictionary<string, object> Data;
-	[JsonProperty("rooms")] public Dictionary<string, object> Rooms;
-	[JsonProperty("conf")] public Dictionary<string, object> Conf;
-	[JsonProperty("error")] public string Error;
-}
-
-
 public class BasicNetworkManager : MonoBehaviour {
 	string currentRoomId;
 	public InputField seed;
@@ -50,7 +26,6 @@ public class BasicNetworkManager : MonoBehaviour {
 		AuthManager.Instance.Authenticate(
 			SystemInfo.deviceUniqueIdentifier.Substring(3, 12)+Application.isEditor+Application.isPlaying,
 			SystemInfo.deviceUniqueIdentifier.Substring(0, 10)+Application.isEditor,
-			SystemInfo.deviceUniqueIdentifier,
 			Application.version,
 			resp => {
 				AuthManager.Instance.ConnectWebSocket(
