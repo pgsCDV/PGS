@@ -147,7 +147,7 @@ public class AuthManager : MonoBehaviour {
         ws.OnMessage += (bytes) => {
             if (isDestroyed) return;
             string msg = Encoding.UTF8.GetString(bytes);
-            Debug.Log($"[WS] Received: {msg}");
+            Debug.Log($"[WS] {Time.time} {Time.frameCount} | Received: {msg}");
             onMessage?.Invoke(msg);
         };
 
