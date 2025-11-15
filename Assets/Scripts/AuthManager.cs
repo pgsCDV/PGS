@@ -48,19 +48,16 @@ public class ServerData {
     public int curr_users;
     public int max_users;
     public int seed;
-    public bool is_favorite;
 }
 
 [Serializable]
-public struct NetMessage {
+public class NetMessage {
     [JsonProperty("status")] public string Status;
     [JsonProperty("cmd")] public string Cmd;
     [JsonProperty("room_id")] public string RoomId;
-    [JsonProperty("username")] public string Username;
-    [JsonProperty("user_id")] public string UserId;
-    [JsonProperty("data")] public Dictionary<string, object> Data;
+    [JsonProperty("room")] public Dictionary<string, object> Room;
     [JsonProperty("rooms")] public Dictionary<string, object> Rooms;
-    [JsonProperty("conf")] public Dictionary<string, object> Conf;
+    [JsonProperty("event")] public string Event;
     [JsonProperty("error")] public string Error;
 }
 
