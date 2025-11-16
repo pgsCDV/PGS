@@ -53,7 +53,7 @@ public class ServerData {
 [Serializable]
 public class NetMessage {
     [JsonProperty("status")] public string Status;
-    [JsonProperty("cmd")] public string Cmd;
+    [JsonProperty("action")] public string Action;
     [JsonProperty("room_id")] public string RoomId;
     [JsonProperty("room")] public Dictionary<string, object> Room;
     [JsonProperty("rooms")] public Dictionary<string, object> Rooms;

@@ -1478,7 +1478,7 @@ GameObject:
   - component: {fileID: 1660087050}
   - component: {fileID: 1660087049}
   m_Layer: 5
-  m_Name: OrderDropdown (Legacy)
+  m_Name: sideDropdown (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1613,7 +1613,7 @@ GameObject:
   - component: {fileID: 1662187073}
   - component: {fileID: 1662187072}
   m_Layer: 5
-  m_Name: OrderText
+  m_Name: sideText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1672,7 +1672,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Order, start game
+  m_Text: Side
 --- !u!222 &1662187073
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4828,7 +4828,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   seed: {fileID: 8192515662289257558}
-  order: {fileID: 1660087049}
+  side: {fileID: 1660087049}
   serverEntryPrefab: {fileID: 7275026450635120472, guid: 67e8bcaec0411b948bcedf077e794e3e, type: 3}
   contentParent: {fileID: 8507149069017473205}
 --- !u!224 &8507149069017473205
@@ -4864,7 +4864,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b410d6fd426a4484282552f8359808bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  side: 0
 --- !u!1 &8630593326908567226
 GameObject:
   m_ObjectHideFlags: 0

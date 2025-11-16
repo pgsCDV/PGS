@@ -47,7 +47,7 @@ public class BasicNetworkManager : MonoBehaviour {
         }
 
         if (status == "ok") {
-            switch (parsed.Cmd) {
+            switch (parsed.Action) {
                 case "create_room":
                     currentRoomId = parsed.RoomId;
                     Debug.Log("Room created: " + currentRoomId);
