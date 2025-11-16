@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class BasicNetworkManager : MonoBehaviour {
     string currentRoomId;
     public InputField seed;
-    public Dropdown order;
+    public Dropdown side;
     public GameObject serverEntryPrefab;
     public Transform contentParent;
     public Dictionary<string, ServerData> serverDict = new();
@@ -51,17 +51,15 @@ public class BasicNetworkManager : MonoBehaviour {
                 case "create_room":
                     currentRoomId = parsed.RoomId;
                     Debug.Log("Room created: " + currentRoomId);
-                    // ВНИМАНИЕ: Убрано автоподключение (авто-join). Теперь создание комнаты и подключение — отдельные действия.
-                    // Если нужно — можно автоматически обновлять список или открыть UI для управления созданной комнатой.
                     break;
 
                 case "join_room":
                     currentRoomId = parsed.RoomId;
                     Debug.Log("Joined room: " + currentRoomId);
-                    if (parsed.Room?.ContainsKey("conf") == true) {
-                        var conf = parsed.Room["conf"] as Dictionary<string, object>;
-                        int seedVal = conf?.ContainsKey("seed") == true ? Convert.ToInt32(conf["seed"]) : 0;
-                        int max = conf?.ContainsKey("max_players") == true ? Convert.ToInt32(conf["max_players"]) : 2;
+                    if (parsed.Room != null) {
+                        var roomObj = parsed.Room as Dictionary<string, object>;
+                        int seedVal = roomObj != null && roomObj.ContainsKey("seed") ? Convert.ToInt32(roomObj["seed"]) : 0;
+                        int max = roomObj != null && roomObj.ContainsKey("max_players") ? Convert.ToInt32(roomObj["max_players"]) : (roomObj != null && roomObj.ContainsKey("max_users") ? Convert.ToInt32(roomObj["max_users"]) : 2);
                         MazeGame.manager = new ServerDataManager { seed = seedVal, serverAddress = currentRoomId };
                         UnityEngine.SceneManagement.SceneManager.LoadScene("ROOM");
                     }
@@ -76,7 +74,7 @@ public class BasicNetworkManager : MonoBehaviour {
             PopulateServerList(ParseRooms(parsed.Rooms));
         }
         else if (parsed.Event == "player_left" || parsed.Event == "player_joined") {
-            SendCommand(WSCmd.GetRooms); // refresh list
+            // rely on server push (rooms_updated), do not actively request get_rooms here
         }
         else if (status == "error") {
             Debug.LogError("Server error: " + parsed.Error);
@@ -88,14 +86,17 @@ public class BasicNetworkManager : MonoBehaviour {
         foreach (var kv in roomsJson) {
             var roomId = kv.Key;
             var roomObj = kv.Value as Dictionary<string, object>;
-            var conf = roomObj?["conf"] as Dictionary<string, object> ?? new();
-            var players = roomObj?["active_players"] as Dictionary<string, object> ?? new();
+            var players = roomObj != null && roomObj.ContainsKey("active_players") ? roomObj["active_players"] as Dictionary<string, object> : new Dictionary<string, object>();
+            int max = 2;
+            if (roomObj != null && roomObj.ContainsKey("max_players")) max = Convert.ToInt32(roomObj["max_players"]);
+            else if (roomObj != null && roomObj.ContainsKey("max_users")) max = Convert.ToInt32(roomObj["max_users"]);
+            int seedVal = roomObj != null && roomObj.ContainsKey("seed") ? Convert.ToInt32(roomObj["seed"]) : 0;
             list.Add(new ServerData {
                 name = roomId,
                 uid = roomId,
-                curr_users = players.Count,
-                max_users = conf.ContainsKey("max_players") ? Convert.ToInt32(conf["max_players"]) : 2,
-                seed = conf.ContainsKey("seed") ? Convert.ToInt32(conf["seed"]) : 0
+                curr_users = players != null ? players.Count : 0,
+                max_users = max,
+                seed = seedVal
             });
         }
         return list.ToArray();
@@ -111,7 +112,8 @@ public class BasicNetworkManager : MonoBehaviour {
     public void CreateServerRequest() {
         if (!AuthManager.Instance.IsSocketActive || string.IsNullOrEmpty(seed.text)) return;
         int.TryParse(seed.text, out int parsedSeed);
-        SendCommand(WSCmd.CreateRoom, new { seed = parsedSeed, order = order.value });
+        int sideVal = side != null ? side.value : 0;
+        SendCommand(WSCmd.CreateRoom, new { seed = parsedSeed, side = sideVal });
     }
 
     public void LeaveCurrentRoom() {
