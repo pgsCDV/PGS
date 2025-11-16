@@ -1,7 +1,8 @@
-﻿using UnityEngine;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class BasicNetworkManager : MonoBehaviour {
@@ -83,24 +84,36 @@ public class BasicNetworkManager : MonoBehaviour {
 
     ServerData[] ParseRooms(Dictionary<string, object> roomsJson) {
         var list = new List<ServerData>();
+        if (roomsJson == null) return list.ToArray();
+
         foreach (var kv in roomsJson) {
-            var roomId = kv.Key;
-            var roomObj = kv.Value as Dictionary<string, object>;
-            var players = roomObj != null && roomObj.ContainsKey("active_players") ? roomObj["active_players"] as Dictionary<string, object> : new Dictionary<string, object>();
-            int max = 2;
-            if (roomObj != null && roomObj.ContainsKey("max_players")) max = Convert.ToInt32(roomObj["max_players"]);
-            else if (roomObj != null && roomObj.ContainsKey("max_users")) max = Convert.ToInt32(roomObj["max_users"]);
-            int seedVal = roomObj != null && roomObj.ContainsKey("seed") ? Convert.ToInt32(roomObj["seed"]) : 0;
+            string roomId = kv.Key;
+
+            Dictionary<string, object> roomObj = null;
+
+            if (kv.Value is JObject jObj) {
+                roomObj = jObj.ToObject<Dictionary<string, object>>();
+            }
+            else if (kv.Value is Dictionary<string, object> dict) {
+                roomObj = dict;
+            }
+
+            if (roomObj == null) continue;
+
+            int currUsers = roomObj.ContainsKey("curr_users") ? Convert.ToInt32(roomObj["curr_users"]) : 0;
+            int maxUsers = roomObj.ContainsKey("max_users") ? Convert.ToInt32(roomObj["max_users"]) : 0;
+            string owner = roomObj.ContainsKey("owner") ? roomObj["owner"].ToString() : "";
+
             list.Add(new ServerData {
-                name = roomId,
                 uid = roomId,
-                curr_users = players != null ? players.Count : 0,
-                max_users = max,
-                seed = seedVal
+                curr_users = currUsers,
+                max_users = maxUsers
             });
         }
+
         return list.ToArray();
     }
+
 
     public void SendCommand(WSCmd cmd, object extra = null) {
         if (!CmdMap.TryGetValue(cmd, out var cmdStr)) return;
@@ -140,7 +153,7 @@ public class BasicNetworkManager : MonoBehaviour {
         foreach (var s in servers) {
             serverDict[s.uid] = s;
             var e = Instantiate(serverEntryPrefab, contentParent).transform;
-            e.GetChild(1).GetComponent<Text>().text = s.name;
+            e.GetChild(1).GetComponent<Text>().text = s.uid;
             e.GetChild(2).GetComponent<Text>().text = $"{s.curr_users}/{s.max_users}";
             string uid = s.uid;
             e.GetChild(3).GetComponent<Button>().onClick.AddListener(() => ConnectToServer(uid));

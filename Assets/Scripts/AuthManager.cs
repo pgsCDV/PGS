@@ -43,7 +43,6 @@ public struct UserIdPayload {
 
 [Serializable]
 public class ServerData {
-    public string name;
     public string uid;
     public int curr_users;
     public int max_users;
