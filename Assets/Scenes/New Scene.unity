@@ -427,7 +427,6 @@ GameObject:
   - component: {fileID: 1280892389}
   - component: {fileID: 1280892391}
   - component: {fileID: 1280892390}
-  - component: {fileID: 1280892392}
   m_Layer: 3
   m_Name: Camera
   m_TagString: Untagged
@@ -509,20 +508,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!114 &1280892392
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1280892388}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0fa9a04b2f9acf24c9f30e56c7f2fa34, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mouseSensitivity: 50
-  player: {fileID: 1280892389}
 --- !u!1 &1437585060
 GameObject:
   m_ObjectHideFlags: 0
@@ -660,7 +645,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!114 &1437585066
 MonoBehaviour:
@@ -674,8 +659,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26b8c8a1f2f7a5d4b8d7fc6b57d00bd3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
+  speed: 20
   gravity: -8
+  jumpHeight: 2
 --- !u!143 &1437585067
 CharacterController:
   m_ObjectHideFlags: 0

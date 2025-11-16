@@ -152,6 +152,7 @@ GameObject:
   - component: {fileID: 8858394298813548397}
   - component: {fileID: 6932955099446271459}
   - component: {fileID: 4981909656519473584}
+  - component: {fileID: 4879431048707257677}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -215,14 +216,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   walkSpeed: 5
-  jumpForce: 6
+  jumpForce: 15
   airControl: 0.5
   groundCheck: {fileID: 3575160816266671413}
-  groundDistance: 0.2
+  groundDistance: 0
   groundMask:
     serializedVersion: 2
-    m_Bits: 1
-  groundDrag: 5
+    m_Bits: 63
+  groundDrag: 0
   airDrag: 0
 --- !u!114 &4981909656519473584
 MonoBehaviour:
@@ -237,3 +238,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IsLocal: 0
+--- !u!114 &4879431048707257677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5944363318349479584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8770d51f99bd78e429e53190fa2884ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 10
+  invertX: 0
+  invertY: 0
