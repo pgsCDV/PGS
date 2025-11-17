@@ -36,10 +36,12 @@ public class PlayerSpawner : MonoBehaviour {
         Transform spawn = side == 1 ? Spawn1 : Spawn2;
 
         GameObject go = Instantiate(PlayerPrefab);
+
         go.name = uid;
         go.transform.position = spawn.position;
 
         go.GetComponent<PlayerNetwork>().IsLocal = false;
+        go.GetComponent<PlayerNetwork>().spawnTime = Time.time;
 
         players[uid] = go;
     }

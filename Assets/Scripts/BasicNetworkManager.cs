@@ -119,11 +119,14 @@ public class BasicNetworkManager : MonoBehaviour {
             PopulateServerList(ParseRooms(parsed.Rooms));
         }
         else if (parsed.Event == "player_joined") {
-            StartCoroutine(SpawnPlayerAfterSceneLoad(parsed.UID, parsed.Side));
+            Debug.Log($"[RAW SPAWN] player_joined | UID: {parsed.UID} | Side: {parsed.Side}");
+            PlayerSpawner.Instance.SpawnRemotePlayer(parsed.UID, parsed.Side);
         }
         else if (parsed.Event == "player_left") {
-            RemovePlayer(parsed.UID);
+            Debug.Log($"[RAW DESPAWN] player_left | UID: {parsed.UID}");
+            PlayerSpawner.Instance.DespawnPlayer(parsed.UID);
         }
+
         else if (status == "error") {
             Debug.LogError("Server error: " + parsed.Error);
         }
@@ -146,8 +149,19 @@ public class BasicNetworkManager : MonoBehaviour {
 
 
     IEnumerator SpawnPlayerAfterSceneLoad(string uid, int side) {
-        while (SceneManager.GetActiveScene().name != "ROOM") yield return null;
-        PlayerSpawner.Instance.SpawnRemotePlayer(uid, side);
+        Debug.Log($"[!!!] SpawnPlayerAfterSceneLoad STARTED | UID: {uid} | Side: {side}");
+        while (SceneManager.GetActiveScene().name != "ROOM") {
+            yield return null;
+        }
+        Debug.Log($"[!!!] SpawnPlayerAfterSceneLoad → Scene now ROOM | Checking if '{uid}' already exists");
+
+        if (GameObject.Find(uid) == null) {
+            Debug.Log($"[!!!] SpawnPlayerAfterSceneLoad → '{uid}' not found → Spawning remote player");
+            PlayerSpawner.Instance.SpawnRemotePlayer(uid, side);
+        }
+        else {
+            Debug.Log($"[!!!] SpawnPlayerAfterSceneLoad → '{uid}' ALREADY EXISTS → Skipping spawn (duplicate prevented)");
+        }
     }
 
     void RemovePlayer(string uid) {
