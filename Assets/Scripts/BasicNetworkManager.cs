@@ -74,7 +74,8 @@ public class BasicNetworkManager : MonoBehaviour {
                     if (parsed.Room != null) {
                         var roomObj = parsed.Room as Dictionary<string, object>;
                         int seedVal = roomObj != null && roomObj.ContainsKey("seed") ? Convert.ToInt32(roomObj["seed"]) : 0;
-                        int max = roomObj != null && roomObj.ContainsKey("max_players") ? Convert.ToInt32(roomObj["max_players"]) : (roomObj != null && roomObj.ContainsKey("max_users") ? Convert.ToInt32(roomObj["max_users"]) : 2);
+                        AuthManager.Instance.side = Convert.ToInt16(roomObj["side"]);
+                        short max = (short)(roomObj != null && roomObj.ContainsKey("max_players") ? Convert.ToInt16(roomObj["max_players"]) : (roomObj != null && roomObj.ContainsKey("max_users") ? Convert.ToInt16(roomObj["max_users"]) : 2));
                         MazeGame.manager = new ServerDataManager { seed = seedVal, serverAddress = currentRoomId };
                         UnityEngine.SceneManagement.SceneManager.LoadScene("ROOM");
                     }

@@ -65,7 +65,7 @@ public class AuthManager : MonoBehaviour {
 
     const string ServerUrl = "https://pgs.wk19.lol";
     const string WsUrl = "wss://pgs.wk19.lol/ws";
-
+    public int side;
     string currentUserId;
     WebSocket ws;
     bool isDestroyed, autoReconnectEnabled = true;
