@@ -951,9 +951,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PlayerPrefab: {fileID: 5944363318349479584, guid: f5fbcfb46b59eb74fa247dde99204a0c, type: 3}
-  Player: {fileID: 1387299791}
-  PlayerSpawn1: {fileID: 514354911}
-  PlayerSpawn2: {fileID: 1052537803}
+  Spawn1: {fileID: 514354911}
+  Spawn2: {fileID: 1052537803}
 --- !u!1 &1786102697
 GameObject:
   m_ObjectHideFlags: 0

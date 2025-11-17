@@ -59,6 +59,10 @@ public class NetMessage {
     [JsonProperty("rooms")] public Dictionary<string, object> Rooms;
     [JsonProperty("event")] public string Event;
     [JsonProperty("error")] public string Error;
+
+    // Для player_joined / player_left
+    [JsonProperty("uid")] public string UID;
+    [JsonProperty("side")] public int Side;
 }
 
 public class AuthManager : MonoBehaviour {

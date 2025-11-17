@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class BasicNetworkManager : MonoBehaviour {
@@ -13,8 +15,7 @@ public class BasicNetworkManager : MonoBehaviour {
     public Transform contentParent;
     public Dictionary<string, ServerData> serverDict = new();
 
-    static readonly Dictionary<WSCmd, string> CmdMap = new()
-    {
+    static readonly Dictionary<WSCmd, string> CmdMap = new() {
         { WSCmd.LeaveRoom, "leave_room" },
         { WSCmd.GetRooms, "get_rooms" },
         { WSCmd.CreateRoom, "create_room" },
@@ -37,8 +38,8 @@ public class BasicNetworkManager : MonoBehaviour {
                         AuthManager.Instance.SendWSMsg(
                             JsonConvert.SerializeObject(
                                 new Dictionary<string, object> {
-                                { "cmd", "leave_room" },
-                                { "data", new Dictionary<string, object> { { "room_id", currentRoomId } } }
+                                    { "cmd", "leave_room" },
+                                    { "data", new Dictionary<string, object> { { "room_id", currentRoomId } } }
                                 }
                             )
                         );
@@ -49,7 +50,6 @@ public class BasicNetworkManager : MonoBehaviour {
             err => Debug.LogError("Auth failed: " + err)
         );
     }
-
 
     void OnMessage(string msg) {
         var parsed = JsonConvert.DeserializeObject<NetMessage>(msg);
@@ -73,42 +73,32 @@ public class BasicNetworkManager : MonoBehaviour {
                     currentRoomId = parsed.RoomId;
                     Debug.Log("Joined room: " + currentRoomId);
 
+                    int seedVal = 0;
                     if (parsed.Room != null) {
                         var roomObj = parsed.Room as Dictionary<string, object>;
-
-                        int seedVal = roomObj != null && roomObj.ContainsKey("seed")
-                            ? Convert.ToInt32(roomObj["seed"])
-                            : 0;
+                        seedVal = roomObj != null && roomObj.ContainsKey("seed") ? Convert.ToInt32(roomObj["seed"]) : 0;
 
                         if (roomObj != null && roomObj.ContainsKey("active_players")) {
                             var act = roomObj["active_players"] as JObject;
                             if (act != null) {
                                 var dict = act.ToObject<Dictionary<string, object>>();
-                                print(dict);
-                                string uid = AuthManager.Instance.GetCurrentUserId();
-
                                 foreach (var kv in dict) {
-                                    if (kv.Key.StartsWith(uid)) {
-                                        var meData = kv.Value as JObject;
-                                        if (meData != null && meData.ContainsKey("side")) {
-                                            AuthManager.Instance.side = (short)meData["side"].ToObject<int>();
-                                        }
-                                        break;
+                                    var meData = kv.Value as JObject;
+                                    if (meData != null && meData.ContainsKey("uid") && meData["uid"].ToString() == AuthManager.Instance.GetCurrentUserId()) {
+                                        AuthManager.Instance.side = (short)meData["side"].ToObject<int>();
                                     }
                                 }
-
                             }
                         }
-
-                        MazeGame.manager = new ServerDataManager {
-                            seed = seedVal,
-                            serverAddress = currentRoomId
-                        };
-
-                        UnityEngine.SceneManagement.SceneManager.LoadScene("ROOM");
                     }
-                    break;
 
+                    MazeGame.manager = new ServerDataManager {
+                        seed = seedVal,
+                        serverAddress = currentRoomId
+                    };
+
+                    StartCoroutine(LoadRoomAndSpawnPlayers());
+                    break;
 
                 case "get_rooms":
                     if (parsed.Rooms != null) PopulateServerList(ParseRooms(parsed.Rooms));
@@ -118,12 +108,35 @@ public class BasicNetworkManager : MonoBehaviour {
         else if (parsed.Event == "rooms_updated" && parsed.Rooms != null) {
             PopulateServerList(ParseRooms(parsed.Rooms));
         }
-        else if (parsed.Event == "player_left" || parsed.Event == "player_joined") {
-            // rely on server push (rooms_updated), do not actively request get_rooms here
+        else if (parsed.Event == "player_joined") {
+            StartCoroutine(SpawnPlayerAfterSceneLoad(parsed.UID, parsed.Side));
+        }
+        else if (parsed.Event == "player_left") {
+            RemovePlayer(parsed.UID);
         }
         else if (status == "error") {
             Debug.LogError("Server error: " + parsed.Error);
         }
+    }
+
+    IEnumerator LoadRoomAndSpawnPlayers() {
+        var asyncLoad = SceneManager.LoadSceneAsync("ROOM");
+        asyncLoad.allowSceneActivation = true;
+
+        while (!asyncLoad.isDone) yield return null;
+
+        PlayerSpawner.Instance.SpawnLocalPlayer();
+        // Можно дополнительно синхронизировать других игроков, если есть информация
+    }
+
+    IEnumerator SpawnPlayerAfterSceneLoad(string uid, int side) {
+        while (SceneManager.GetActiveScene().name != "ROOM") yield return null;
+        PlayerSpawner.Instance.SpawnRemotePlayer(uid, side);
+    }
+
+    void RemovePlayer(string uid) {
+        var go = GameObject.Find(uid);
+        if (go != null) Destroy(go);
     }
 
     ServerData[] ParseRooms(Dictionary<string, object> roomsJson) {
@@ -132,21 +145,15 @@ public class BasicNetworkManager : MonoBehaviour {
 
         foreach (var kv in roomsJson) {
             string roomId = kv.Key;
-
             Dictionary<string, object> roomObj = null;
 
-            if (kv.Value is JObject jObj) {
-                roomObj = jObj.ToObject<Dictionary<string, object>>();
-            }
-            else if (kv.Value is Dictionary<string, object> dict) {
-                roomObj = dict;
-            }
+            if (kv.Value is JObject jObj) roomObj = jObj.ToObject<Dictionary<string, object>>();
+            else if (kv.Value is Dictionary<string, object> dict) roomObj = dict;
 
             if (roomObj == null) continue;
 
             int currUsers = roomObj.ContainsKey("curr_users") ? Convert.ToInt32(roomObj["curr_users"]) : 0;
             int maxUsers = roomObj.ContainsKey("max_users") ? Convert.ToInt32(roomObj["max_users"]) : 0;
-            string owner = roomObj.ContainsKey("owner") ? roomObj["owner"].ToString() : "";
 
             list.Add(new ServerData {
                 uid = roomId,
@@ -157,7 +164,6 @@ public class BasicNetworkManager : MonoBehaviour {
 
         return list.ToArray();
     }
-
 
     public void SendCommand(WSCmd cmd, object extra = null) {
         if (!CmdMap.TryGetValue(cmd, out var cmdStr)) return;
@@ -210,6 +216,7 @@ public class BasicNetworkManager : MonoBehaviour {
             SendCommand(WSCmd.JoinRoom, new { room_id = serv_uid });
         }
     }
+
     void OnApplicationQuit() {
         if (!string.IsNullOrEmpty(currentRoomId) && AuthManager.Instance.IsSocketActive) {
             SendCommand(WSCmd.LeaveRoom, new { room_id = currentRoomId });
@@ -222,6 +229,4 @@ public class BasicNetworkManager : MonoBehaviour {
             currentRoomId = null;
         }
     }
-
-
 }

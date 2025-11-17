@@ -42,6 +42,7 @@ public class MazeGame : MonoBehaviour {
 	}
 
 	void GenerateAndSpawnAll() {
+		print(manager.seed);
 		GenerateAndSpawnMaze(manager.seed, pos1, new (8,8));
 		GenerateAndSpawnMaze(manager.seed + 1, pos2, new(8, 8));
 		GenerateAndSpawnMaze(manager.seed + 2, pos3, new(8, 8));

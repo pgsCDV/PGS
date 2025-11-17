@@ -1,17 +1,52 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerSpawner : MonoBehaviour
-{
-	public GameObject PlayerPrefab;
-	public Transform Player, PlayerSpawn1, PlayerSpawn2;
-	void Start()
-	{
-		AuthManager am = AuthManager.Instance;
-		Transform pp = (am.side == 1 ? PlayerSpawn1 : PlayerSpawn2);
-		GameObject go = Instantiate(PlayerPrefab,Player);
-		go.name = am.GetCurrentUserId();
-        go.transform.position = pp.position;
-		CameraSingletone.instance.transform.position = go.transform.position;
-		CameraSingletone.instance.transform.SetParent(go.transform);
-	}
+public class PlayerSpawner : MonoBehaviour {
+    public static PlayerSpawner Instance;
+    public GameObject PlayerPrefab;
+    public Transform Spawn1;
+    public Transform Spawn2;
+
+    Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
+
+    void Awake() {
+        Instance = this;
+    }
+
+    public void SpawnLocalPlayer() {
+        string uid = AuthManager.Instance.GetCurrentUserId();
+        int side = AuthManager.Instance.side;
+        Transform spawn = side == 1 ? Spawn1 : Spawn2;
+
+        GameObject go = Instantiate(PlayerPrefab);
+        go.name = uid;
+        go.transform.position = spawn.position;
+
+        go.GetComponent<PlayerNetwork>().IsLocal = true;
+
+        CameraSingletone.instance.transform.position = go.transform.position;
+        CameraSingletone.instance.transform.SetParent(go.transform);
+
+        players[uid] = go;
+    }
+
+    public void SpawnRemotePlayer(string uid, int side) {
+        if (players.ContainsKey(uid)) return;
+
+        Transform spawn = side == 1 ? Spawn1 : Spawn2;
+
+        GameObject go = Instantiate(PlayerPrefab);
+        go.name = uid;
+        go.transform.position = spawn.position;
+
+        go.GetComponent<PlayerNetwork>().IsLocal = false;
+
+        players[uid] = go;
+    }
+
+    public void DespawnPlayer(string uid) {
+        if (!players.ContainsKey(uid)) return;
+        Destroy(players[uid]);
+        players.Remove(uid);
+    }
 }
