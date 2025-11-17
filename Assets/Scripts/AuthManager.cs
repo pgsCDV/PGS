@@ -182,7 +182,7 @@ public class AuthManager : MonoBehaviour {
 
     public async void SendWSMsg(string message) {
         if (ws != null && ws.State == WebSocketState.Open) {
-            Debug.Log($"[WS] Sent: {message}");
+            Debug.Log($"[WS] {Time.time} {Time.frameCount} | Sent: {message}");
             await ws.SendText(message);
         }
         else {
