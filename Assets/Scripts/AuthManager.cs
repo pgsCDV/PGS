@@ -54,6 +54,7 @@ public class NetMessage {
     [JsonProperty("status")] public string Status;
     [JsonProperty("action")] public string Action;
     [JsonProperty("room_id")] public string RoomId;
+    [JsonProperty("username")] public string Username;
     [JsonProperty("room")] public Dictionary<string, object> Room;
     [JsonProperty("rooms")] public Dictionary<string, object> Rooms;
     [JsonProperty("event")] public string Event;
@@ -67,12 +68,14 @@ public class AuthManager : MonoBehaviour {
     const string WsUrl = "wss://pgs.wk19.lol/ws";
     public int side;
     string currentUserId;
+    public string username;
     WebSocket ws;
     bool isDestroyed, autoReconnectEnabled = true;
     float reconnectDelay = 4f;
     Coroutine reconnectRoutine;
 
     public string GetCurrentUserId() => currentUserId;
+    public string SetCurrentUsername(string uid) => username=uid;
     public bool IsSocketActive => ws != null && ws.State == WebSocketState.Open;
 
     void Awake() {

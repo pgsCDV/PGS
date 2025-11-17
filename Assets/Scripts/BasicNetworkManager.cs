@@ -56,6 +56,7 @@ public class BasicNetworkManager : MonoBehaviour {
         var status = (parsed.Status ?? "").ToLower();
 
         if (status == "connected") {
+            AuthManager.Instance.SetCurrentUsername(parsed.Username);
             SendCommand(WSCmd.GetRooms);
             return;
         }
@@ -71,15 +72,43 @@ public class BasicNetworkManager : MonoBehaviour {
                 case "join_room":
                     currentRoomId = parsed.RoomId;
                     Debug.Log("Joined room: " + currentRoomId);
+
                     if (parsed.Room != null) {
                         var roomObj = parsed.Room as Dictionary<string, object>;
-                        int seedVal = roomObj != null && roomObj.ContainsKey("seed") ? Convert.ToInt32(roomObj["seed"]) : 0;
-                        AuthManager.Instance.side = Convert.ToInt16(roomObj["side"]);
-                        short max = (short)(roomObj != null && roomObj.ContainsKey("max_players") ? Convert.ToInt16(roomObj["max_players"]) : (roomObj != null && roomObj.ContainsKey("max_users") ? Convert.ToInt16(roomObj["max_users"]) : 2));
-                        MazeGame.manager = new ServerDataManager { seed = seedVal, serverAddress = currentRoomId };
+
+                        int seedVal = roomObj != null && roomObj.ContainsKey("seed")
+                            ? Convert.ToInt32(roomObj["seed"])
+                            : 0;
+
+                        if (roomObj != null && roomObj.ContainsKey("active_players")) {
+                            var act = roomObj["active_players"] as JObject;
+                            if (act != null) {
+                                var dict = act.ToObject<Dictionary<string, object>>();
+                                print(dict);
+                                string uid = AuthManager.Instance.GetCurrentUserId();
+
+                                foreach (var kv in dict) {
+                                    if (kv.Key.StartsWith(uid)) {
+                                        var meData = kv.Value as JObject;
+                                        if (meData != null && meData.ContainsKey("side")) {
+                                            AuthManager.Instance.side = (short)meData["side"].ToObject<int>();
+                                        }
+                                        break;
+                                    }
+                                }
+
+                            }
+                        }
+
+                        MazeGame.manager = new ServerDataManager {
+                            seed = seedVal,
+                            serverAddress = currentRoomId
+                        };
+
                         UnityEngine.SceneManagement.SceneManager.LoadScene("ROOM");
                     }
                     break;
+
 
                 case "get_rooms":
                     if (parsed.Rooms != null) PopulateServerList(ParseRooms(parsed.Rooms));

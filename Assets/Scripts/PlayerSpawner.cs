@@ -9,7 +9,8 @@ public class PlayerSpawner : MonoBehaviour
 		AuthManager am = AuthManager.Instance;
 		Transform pp = (am.side == 1 ? PlayerSpawn1 : PlayerSpawn2);
 		GameObject go = Instantiate(PlayerPrefab,Player);
-		go.transform.position = pp.position;
+		go.name = am.GetCurrentUserId();
+        go.transform.position = pp.position;
 		CameraSingletone.instance.transform.position = go.transform.position;
 		CameraSingletone.instance.transform.SetParent(go.transform);
 	}
