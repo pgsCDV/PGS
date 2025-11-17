@@ -74,6 +74,8 @@ public class BasicNetworkManager : MonoBehaviour {
                     Debug.Log("Joined room: " + currentRoomId);
 
                     int seedVal = 0;
+                    List<(string uid, int side)> playersToSpawn = new();
+
                     if (parsed.Room != null) {
                         var roomObj = parsed.Room as Dictionary<string, object>;
                         seedVal = roomObj != null && roomObj.ContainsKey("seed") ? Convert.ToInt32(roomObj["seed"]) : 0;
@@ -84,8 +86,15 @@ public class BasicNetworkManager : MonoBehaviour {
                                 var dict = act.ToObject<Dictionary<string, object>>();
                                 foreach (var kv in dict) {
                                     var meData = kv.Value as JObject;
-                                    if (meData != null && meData.ContainsKey("uid") && meData["uid"].ToString() == AuthManager.Instance.GetCurrentUserId()) {
-                                        AuthManager.Instance.side = (short)meData["side"].ToObject<int>();
+                                    if (meData != null && meData.ContainsKey("uid") && meData.ContainsKey("side")) {
+                                        string uid = meData["uid"].ToString();
+                                        int pSide = meData["side"].ToObject<int>();
+                                        if (uid == AuthManager.Instance.GetCurrentUserId()) {
+                                            AuthManager.Instance.side = (short)pSide;
+                                        }
+                                        else {
+                                            playersToSpawn.Add((uid, pSide));
+                                        }
                                     }
                                 }
                             }
@@ -97,8 +106,9 @@ public class BasicNetworkManager : MonoBehaviour {
                         serverAddress = currentRoomId
                     };
 
-                    StartCoroutine(LoadRoomAndSpawnPlayers());
+                    StartCoroutine(LoadRoomAndSpawnPlayers(playersToSpawn));
                     break;
+
 
                 case "get_rooms":
                     if (parsed.Rooms != null) PopulateServerList(ParseRooms(parsed.Rooms));
@@ -119,15 +129,21 @@ public class BasicNetworkManager : MonoBehaviour {
         }
     }
 
-    IEnumerator LoadRoomAndSpawnPlayers() {
+    IEnumerator LoadRoomAndSpawnPlayers(List<(string uid, int side)> otherPlayers) {
         var asyncLoad = SceneManager.LoadSceneAsync("ROOM");
         asyncLoad.allowSceneActivation = true;
 
         while (!asyncLoad.isDone) yield return null;
 
+        // Спавн локального игрока
         PlayerSpawner.Instance.SpawnLocalPlayer();
-        // Можно дополнительно синхронизировать других игроков, если есть информация
+
+        // Спавн остальных игроков в комнате
+        foreach (var p in otherPlayers) {
+            PlayerSpawner.Instance.SpawnRemotePlayer(p.uid, p.side);
+        }
     }
+
 
     IEnumerator SpawnPlayerAfterSceneLoad(string uid, int side) {
         while (SceneManager.GetActiveScene().name != "ROOM") yield return null;
