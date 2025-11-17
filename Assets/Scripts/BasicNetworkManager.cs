@@ -64,7 +64,8 @@ public class BasicNetworkManager : MonoBehaviour {
             switch (parsed.Action) {
                 case "create_room":
                     currentRoomId = parsed.RoomId;
-                    Debug.Log("Room created: " + currentRoomId);
+                    int joinSide = side != null ? Mathf.Clamp(side.value + 1, 1, 2) : 1;
+                    SendCommand(WSCmd.JoinRoom, new { room_id = currentRoomId, side = joinSide });
                     break;
 
                 case "join_room":
@@ -138,7 +139,7 @@ public class BasicNetworkManager : MonoBehaviour {
     public void CreateServerRequest() {
         if (!AuthManager.Instance.IsSocketActive || string.IsNullOrEmpty(seed.text)) return;
         int.TryParse(seed.text, out int parsedSeed);
-        int sideVal = side != null ? side.value : 0;
+        int sideVal = side != null ? Mathf.Clamp(side.value + 1, 1, 2) : 1;
         SendCommand(WSCmd.CreateRoom, new { seed = parsedSeed, side = sideVal });
     }
 
