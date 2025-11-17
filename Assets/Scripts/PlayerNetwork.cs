@@ -1,15 +1,11 @@
-// PlayerNetwork.cs
 using Newtonsoft.Json;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerNetwork : MonoBehaviour {
     public bool IsLocal;
     Vector3 lastSentPos;
-    float sendThreshold = 0.05f;
-    float sendInterval = 0.05f;
-    float sendTimer = 0f;
+    float sendThreshold = 0.00018f;
 
     void Start() {
         if (!IsLocal) {
@@ -25,13 +21,9 @@ public class PlayerNetwork : MonoBehaviour {
     void Update() {
         if (!IsLocal) return;
 
-        sendTimer += Time.deltaTime;
-        if (sendTimer < sendInterval) return;
-
         var pos = transform.position;
-        if (Vector3.Distance(pos, lastSentPos) > sendThreshold) {
+        if ((pos - lastSentPos).sqrMagnitude > sendThreshold * sendThreshold) {
             lastSentPos = pos;
-            sendTimer = 0f;
 
             var roomId = BasicNetworkManager.Instance != null ? BasicNetworkManager.Instance.CurrentRoomId : null;
             if (string.IsNullOrEmpty(roomId)) return;
@@ -51,9 +43,6 @@ public class PlayerNetwork : MonoBehaviour {
 
             var json = JsonConvert.SerializeObject(payload);
             AuthManager.Instance.SendWSMsg(json);
-        }
-        else {
-            sendTimer = 0f;
         }
     }
 }
