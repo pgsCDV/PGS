@@ -18,10 +18,10 @@ public class PlayerSpawner : MonoBehaviour {
         int side = AuthManager.Instance.side;
         Transform spawn = side == 1 ? Spawn1 : Spawn2;
 
-        GameObject go = Instantiate(PlayerPrefab);
-        go.name = uid;
-        go.transform.position = spawn.position;
+        if (players.ContainsKey(uid)) DespawnPlayer(uid);
 
+        GameObject go = Instantiate(PlayerPrefab, spawn.position, Quaternion.identity);
+        go.name = uid;
         go.GetComponent<PlayerNetwork>().IsLocal = true;
 
         CameraSingletone.instance.transform.position = go.transform.position;
@@ -31,17 +31,12 @@ public class PlayerSpawner : MonoBehaviour {
     }
 
     public void SpawnRemotePlayer(string uid, int side) {
-        if (players.ContainsKey(uid)) return;
+        if (players.ContainsKey(uid)) DespawnPlayer(uid);
 
         Transform spawn = side == 1 ? Spawn1 : Spawn2;
-
-        GameObject go = Instantiate(PlayerPrefab);
-
+        GameObject go = Instantiate(PlayerPrefab, spawn.position, Quaternion.identity);
         go.name = uid;
-        go.transform.position = spawn.position;
-
         go.GetComponent<PlayerNetwork>().IsLocal = false;
-        go.GetComponent<PlayerNetwork>().spawnTime = Time.time;
 
         players[uid] = go;
     }
@@ -50,5 +45,11 @@ public class PlayerSpawner : MonoBehaviour {
         if (!players.ContainsKey(uid)) return;
         Destroy(players[uid]);
         players.Remove(uid);
+    }
+
+    public void DespawnAll() {
+        foreach (var kv in new Dictionary<string, GameObject>(players)) {
+            DespawnPlayer(kv.Key);
+        }
     }
 }

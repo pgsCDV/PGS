@@ -137,36 +137,11 @@ public class BasicNetworkManager : MonoBehaviour {
         asyncLoad.allowSceneActivation = true;
 
         while (!asyncLoad.isDone) yield return null;
-
-        // Спавн локального игрока
         PlayerSpawner.Instance.SpawnLocalPlayer();
 
-        // Спавн остальных игроков в комнате
         foreach (var p in otherPlayers) {
             PlayerSpawner.Instance.SpawnRemotePlayer(p.uid, p.side);
         }
-    }
-
-
-    IEnumerator SpawnPlayerAfterSceneLoad(string uid, int side) {
-        Debug.Log($"[!!!] SpawnPlayerAfterSceneLoad STARTED | UID: {uid} | Side: {side}");
-        while (SceneManager.GetActiveScene().name != "ROOM") {
-            yield return null;
-        }
-        Debug.Log($"[!!!] SpawnPlayerAfterSceneLoad → Scene now ROOM | Checking if '{uid}' already exists");
-
-        if (GameObject.Find(uid) == null) {
-            Debug.Log($"[!!!] SpawnPlayerAfterSceneLoad → '{uid}' not found → Spawning remote player");
-            PlayerSpawner.Instance.SpawnRemotePlayer(uid, side);
-        }
-        else {
-            Debug.Log($"[!!!] SpawnPlayerAfterSceneLoad → '{uid}' ALREADY EXISTS → Skipping spawn (duplicate prevented)");
-        }
-    }
-
-    void RemovePlayer(string uid) {
-        var go = GameObject.Find(uid);
-        if (go != null) Destroy(go);
     }
 
     ServerData[] ParseRooms(Dictionary<string, object> roomsJson) {
