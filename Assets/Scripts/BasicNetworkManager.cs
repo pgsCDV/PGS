@@ -32,11 +32,24 @@ public class BasicNetworkManager : MonoBehaviour {
                 onOpen: () => { },
                 onMessage: OnMessage,
                 onError: err => Debug.LogError("Auth WS Error: " + err),
-                onClose: code => Debug.Log("WS closed: " + code)
+                onClose: code => {
+                    if (!string.IsNullOrEmpty(currentRoomId)) {
+                        AuthManager.Instance.SendWSMsg(
+                            JsonConvert.SerializeObject(
+                                new Dictionary<string, object> {
+                                { "cmd", "leave_room" },
+                                { "data", new Dictionary<string, object> { { "room_id", currentRoomId } } }
+                                }
+                            )
+                        );
+                        currentRoomId = null;
+                    }
+                }
             ),
             err => Debug.LogError("Auth failed: " + err)
         );
     }
+
 
     void OnMessage(string msg) {
         var parsed = JsonConvert.DeserializeObject<NetMessage>(msg);
@@ -166,4 +179,18 @@ public class BasicNetworkManager : MonoBehaviour {
             SendCommand(WSCmd.JoinRoom, new { room_id = serv_uid });
         }
     }
+    void OnApplicationQuit() {
+        if (!string.IsNullOrEmpty(currentRoomId) && AuthManager.Instance.IsSocketActive) {
+            SendCommand(WSCmd.LeaveRoom, new { room_id = currentRoomId });
+            currentRoomId = null;
+        }
+    }
+    void OnDestroy() {
+        if (!string.IsNullOrEmpty(currentRoomId) && AuthManager.Instance.IsSocketActive) {
+            SendCommand(WSCmd.LeaveRoom, new { room_id = currentRoomId });
+            currentRoomId = null;
+        }
+    }
+
+
 }
