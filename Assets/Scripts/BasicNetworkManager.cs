@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿// BasicNetworkManager.cs (updated parts: singleton, expose CurrentRoomId, handle incoming room_rpc sync_position)
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -8,7 +9,11 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class BasicNetworkManager : MonoBehaviour {
+    public static BasicNetworkManager Instance;
+
     string currentRoomId;
+    public string CurrentRoomId => currentRoomId;
+
     public InputField seed;
     public Dropdown side;
     public GameObject serverEntryPrefab;
@@ -21,6 +26,10 @@ public class BasicNetworkManager : MonoBehaviour {
         { WSCmd.CreateRoom, "create_room" },
         { WSCmd.JoinRoom, "join_room" }
     };
+
+    void Awake() {
+        Instance = this;
+    }
 
     void Start() => LogInto();
 
@@ -126,8 +135,25 @@ public class BasicNetworkManager : MonoBehaviour {
             Debug.Log($"[RAW DESPAWN] player_left | UID: {parsed.UID}");
             PlayerSpawner.Instance.DespawnPlayer(parsed.UID);
         }
+        else {
+            try {
+                var jobj = JObject.Parse(msg);
+                if (jobj["event"] != null && jobj["event"].ToString() == "room_rpc") {
+                    var from = jobj["from"]?.ToString();
+                    var data = jobj["data"] as JObject;
+                    if (data != null && data["cmd"] != null && data["cmd"].ToString() == "sync_position") {
+                        float px = data["position_x"] != null ? data["position_x"].ToObject<float>() : 0f;
+                        float py = data["position_y"] != null ? data["position_y"].ToObject<float>() : 0f;
+                        float pz = data["position_z"] != null ? data["position_z"].ToObject<float>() : 0f;
+                        if (!string.IsNullOrEmpty(from) && PlayerSpawner.Instance != null) {
+                            PlayerSpawner.Instance.TrySetPlayerPosition(from, new Vector3(px, py, pz));
+                        }
+                    }
+                }
+            } catch (Exception) { }
+        }
 
-        else if (status == "error") {
+        if (status == "error") {
             Debug.LogError("Server error: " + parsed.Error);
         }
     }

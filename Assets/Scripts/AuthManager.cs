@@ -61,6 +61,9 @@ public class NetMessage {
     [JsonProperty("error")] public string Error;
 
     // Для player_joined / player_left
+    public float PositionX;
+    public float PositionY;
+    public float PositionZ;
     [JsonProperty("uid")] public string UID;
     [JsonProperty("side")] public int Side;
 }

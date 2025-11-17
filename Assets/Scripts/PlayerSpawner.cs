@@ -1,3 +1,4 @@
+// PlayerSpawner.cs (added TrySetPlayerPosition)
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -51,5 +52,16 @@ public class PlayerSpawner : MonoBehaviour {
         foreach (var kv in new Dictionary<string, GameObject>(players)) {
             DespawnPlayer(kv.Key);
         }
+    }
+
+    public bool TrySetPlayerPosition(string uid, Vector3 pos) {
+        if (string.IsNullOrEmpty(uid)) return false;
+        if (!players.ContainsKey(uid)) return false;
+        var go = players[uid];
+        if (go == null) return false;
+        var net = go.GetComponent<PlayerNetwork>();
+        if (net != null && net.IsLocal) return false;
+        go.transform.position = pos;
+        return true;
     }
 }
