@@ -90,6 +90,14 @@ public class AuthManager : MonoBehaviour {
         else Destroy(gameObject);
     }
 
+    IEnumerator Start() {
+        while (true) {
+            if (AuthManager.Instance.IsSocketActive) {
+                AuthManager.Instance.SendWSMsg("{\"cmd\":\"ping\"}");
+            }
+            yield return new WaitForSeconds(3f);
+        }
+    }
     [Serializable]
     private class Credentials {
         public string username;
