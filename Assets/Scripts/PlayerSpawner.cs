@@ -6,6 +6,8 @@ public class PlayerSpawner : MonoBehaviour {
 	public GameObject PlayerPrefab;
 	public Transform Spawn1;
 	public Transform Spawn2;
+	public Transform map1Spawn1;
+	public Transform map1Spawn2;
 
 	Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
 
@@ -13,10 +15,17 @@ public class PlayerSpawner : MonoBehaviour {
 		Instance = this;
 	}
 
+	Transform GetSpawn(int side) {
+		int loc = BasicNetworkManager.Instance.CurrentStartLocation;
+		if (loc == 0) return side == 1 ? Spawn1 : Spawn2;
+		if (loc == 1) return side == 1 ? map1Spawn1 : map1Spawn2;
+		return side == 1 ? Spawn1 : Spawn2;
+	}
+
 	public void SpawnLocalPlayer() {
 		string uid = AuthManager.Instance.GetCurrentUserId();
 		int side = AuthManager.Instance.side;
-		Transform spawn = (side == 1 ? Spawn1 : Spawn2) ?? transform;
+		Transform spawn = GetSpawn(side) ?? transform;
 
 		if (players.ContainsKey(uid)) DespawnPlayer(uid);
 
@@ -34,7 +43,7 @@ public class PlayerSpawner : MonoBehaviour {
 	public void SpawnRemotePlayer(string uid, int side) {
 		if (players.ContainsKey(uid)) DespawnPlayer(uid);
 
-		Transform spawn = (side == 1 ? Spawn1 : Spawn2) ?? transform;
+		Transform spawn = GetSpawn(side) ?? transform;
 		GameObject go = Instantiate(PlayerPrefab, spawn.position, Quaternion.identity);
 		go.name = uid;
 		go.GetComponent<PlayerNetwork>().IsLocal = false;

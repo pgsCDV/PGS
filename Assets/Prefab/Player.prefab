@@ -126,7 +126,7 @@ SphereCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4206404024182429154}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: e85ab32f26223d2458a9727bb6b464c2, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -219,7 +219,7 @@ MonoBehaviour:
   jumpForce: 15
   airControl: 0.5
   groundCheck: {fileID: 3575160816266671413}
-  groundDistance: 0
+  groundDistance: 0.1
   groundMask:
     serializedVersion: 2
     m_Bits: 63

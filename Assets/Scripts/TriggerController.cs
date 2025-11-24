@@ -1,56 +1,118 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public enum TriggerType : byte { OnEnter = 2, OnStay = 4, OnExit = 8 }
-public enum TriggerActivator : byte { Local = 1, Remote = 2, Both = 3 }
-public enum TriggerAction : byte { Teleport = 1, TeleportIfBoth = 2, TeleportSpecific = 3 }
+public enum TriggerCondition : byte {
+    Any = 0,            
+    LocalOnly = 1,      
+    RemoteOnly = 2,     
+    Side1 = 3,          
+    Side2 = 4,          
+    BothRequired = 5    
+}
+
+public enum TriggerAction : byte {
+    Teleport = 0,           
+    SetObjectActive = 1     
+}
 
 public class TriggerController : MonoBehaviour {
-    public TriggerType type;
-    public TriggerActivator activator;
+    [Header("Settings")]
+    public TriggerCondition condition;
     public TriggerAction action;
-    public Transform teleportTarget;
-    public string specificUid;
 
-    int insideCount;
+    [Header("Teleport Settings")]
+    public Transform teleportTarget;
+
+    [Header("Object Toggle Settings")]
+    public GameObject targetObject;
+    public bool activeStateOnEnter = true; 
+
+    private HashSet<GameObject> playersInside = new HashSet<GameObject>();
 
     void OnTriggerEnter(Collider other) {
-        if (type != TriggerType.OnEnter) return;
-        TryActivate(other);
-    }
-
-    void OnTriggerStay(Collider other) {
-        if (type != TriggerType.OnStay) return;
-        TryActivate(other);
+        HandleTrigger(other, true);
     }
 
     void OnTriggerExit(Collider other) {
-        if (type != TriggerType.OnExit) return;
-        TryActivate(other);
+        HandleTrigger(other, false);
     }
 
-    void TryActivate(Collider other) {
-        var pn = other.GetComponent<PlayerNetwork>();
+    void HandleTrigger(Collider other, bool isEnter) {
+        var pn = other.transform.parent.GetComponent<PlayerNetwork>();
         if (pn == null) return;
 
-        if (activator == TriggerActivator.Local && !pn.IsLocal) return;
-        if (activator == TriggerActivator.Remote && pn.IsLocal) return;
-
-        if (action == TriggerAction.Teleport) {
-            TriggerNetwork.SendRPC(this, "teleport", teleportTarget.position);
-            return;
+        if (isEnter) {
+            playersInside.Add(other.gameObject);
+        }
+        else {
+            playersInside.Remove(other.gameObject);
         }
 
-        if (action == TriggerAction.TeleportSpecific) {
-            if (pn.IsLocal && AuthManager.Instance.GetCurrentUserId() == specificUid)
-                TriggerNetwork.SendRPC(this, "teleport_specific", teleportTarget.position);
-            return;
+        bool conditionMet = CheckCondition(pn);
+
+        if (conditionMet) {
+            if (isEnter) {
+                ExecuteAction(pn);
+            }
+            else {
+                RevertAction(pn);
+            }
+        }
+    }
+
+    bool CheckCondition(PlayerNetwork pn) {
+        if (condition == TriggerCondition.BothRequired) {
+            return playersInside.Count >= 2;
         }
 
-        if (action == TriggerAction.TeleportIfBoth) {
-            if (pn.IsLocal) insideCount++;
-            if (insideCount >= 2) {
-                TriggerNetwork.SendRPC(this, "teleport_both", teleportTarget.position);
-                insideCount = 0;
+        int localSide = AuthManager.Instance.side;
+        int playerSide = pn.IsLocal ? localSide : (localSide == 1 ? 2 : 1);
+
+        switch (condition) {
+            case TriggerCondition.Any: return true;
+            case TriggerCondition.LocalOnly: return pn.IsLocal;
+            case TriggerCondition.RemoteOnly: return !pn.IsLocal;
+            case TriggerCondition.Side1: return playerSide == 1;
+            case TriggerCondition.Side2: return playerSide == 2;
+            default: return false;
+        }
+    }
+
+    void ExecuteAction(PlayerNetwork pn) {
+        if (action == TriggerAction.SetObjectActive) {
+            if (targetObject != null) {
+                targetObject.SetActive(activeStateOnEnter);
+            }
+        }
+        else if (action == TriggerAction.Teleport) {
+            if (condition == TriggerCondition.BothRequired) {
+                TeleportLocalPlayer();
+            }
+            else {
+                if (pn.IsLocal) {
+                    pn.transform.position = teleportTarget.position;
+                    pn.SetNetworkPosition(teleportTarget.position);
+                }
+            }
+        }
+    }
+
+    void RevertAction(PlayerNetwork pn) {
+        if (action == TriggerAction.SetObjectActive) {
+            if (targetObject != null) {
+                targetObject.SetActive(!activeStateOnEnter);
+            }
+        }
+    }
+
+    void TeleportLocalPlayer() {
+        string uid = AuthManager.Instance.GetCurrentUserId();
+        foreach (var p in playersInside) {
+            var net = p.GetComponent<PlayerNetwork>();
+            if (net != null && net.IsLocal) {
+                p.transform.position = teleportTarget.position;
+                net.SetNetworkPosition(teleportTarget.position);
+                return;
             }
         }
     }
