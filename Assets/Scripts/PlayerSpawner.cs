@@ -1,4 +1,3 @@
-// PlayerSpawner.cs (added TrySetPlayerPosition)
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,7 +16,7 @@ public class PlayerSpawner : MonoBehaviour {
 	public void SpawnLocalPlayer() {
 		string uid = AuthManager.Instance.GetCurrentUserId();
 		int side = AuthManager.Instance.side;
-		Transform spawn = side == 1 ? Spawn1 : Spawn2;
+		Transform spawn = (side == 1 ? Spawn1 : Spawn2) ?? transform;
 
 		if (players.ContainsKey(uid)) DespawnPlayer(uid);
 
@@ -35,7 +34,7 @@ public class PlayerSpawner : MonoBehaviour {
 	public void SpawnRemotePlayer(string uid, int side) {
 		if (players.ContainsKey(uid)) DespawnPlayer(uid);
 
-		Transform spawn = side == 1 ? Spawn1 : Spawn2;
+		Transform spawn = (side == 1 ? Spawn1 : Spawn2) ?? transform;
 		GameObject go = Instantiate(PlayerPrefab, spawn.position, Quaternion.identity);
 		go.name = uid;
 		go.GetComponent<PlayerNetwork>().IsLocal = false;
@@ -63,9 +62,19 @@ public class PlayerSpawner : MonoBehaviour {
 		if (!players.ContainsKey(uid)) return false;
 		var go = players[uid];
 		if (go == null) return false;
+
 		var net = go.GetComponent<PlayerNetwork>();
-		if (net != null && net.IsLocal) return false;
-		go.transform.position = pos;
-		return true;
+
+		if (net != null && !net.IsLocal) {
+			net.SetNetworkPosition(pos);
+			return true;
+		}
+
+		if (net == null) {
+			go.transform.position = pos;
+			return true;
+		}
+
+		return false;
 	}
 }
