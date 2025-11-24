@@ -6,11 +6,11 @@ public class PlayerNetwork : MonoBehaviour {
 	public bool IsLocal;
 
 	Vector3 lastSentPos;
-	float sendThreshold = 0.003f;
+	float sendThreshold = 0.001f;
 
 	Vector3 targetPosition;
-	float smoothingSpeed = 10f;
-	float snapDistance = 4f;    
+	float smoothingSpeed = 13f;
+	float snapDistance = 5f;    
 
 	void Awake() {
 		targetPosition = transform.position;
