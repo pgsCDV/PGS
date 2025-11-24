@@ -27,6 +27,7 @@ public class PlayerSpawner : MonoBehaviour {
 
         CameraSingletone.instance.transform.position = go.transform.position;
         CameraSingletone.instance.transform.SetParent(go.transform);
+        PlayerSpawnerInternal.Register(uid);
 
         players[uid] = go;
     }
@@ -38,6 +39,7 @@ public class PlayerSpawner : MonoBehaviour {
         GameObject go = Instantiate(PlayerPrefab, spawn.position, Quaternion.identity);
         go.name = uid;
         go.GetComponent<PlayerNetwork>().IsLocal = false;
+        PlayerSpawnerInternal.Register(uid);
 
         players[uid] = go;
     }
@@ -45,6 +47,8 @@ public class PlayerSpawner : MonoBehaviour {
     public void DespawnPlayer(string uid) {
         if (!players.ContainsKey(uid)) return;
         Destroy(players[uid]);
+        PlayerSpawnerInternal.Unregister(uid);
+
         players.Remove(uid);
     }
 

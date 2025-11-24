@@ -164,6 +164,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   androidMinAspectRatio: 1
   applicationIdentifier:
+    Android: com.wk04_pgs.pgs_cdv
     Standalone: com.wk04-pgs.pgs-cdv
   buildNumber:
     Standalone: 0

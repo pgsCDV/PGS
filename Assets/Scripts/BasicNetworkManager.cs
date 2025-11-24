@@ -149,6 +149,12 @@ public class BasicNetworkManager : MonoBehaviour {
                             PlayerSpawner.Instance.TrySetPlayerPosition(from, new Vector3(px, py, pz));
                         }
                     }
+                    string c = data["cmd"].ToString();
+                    int trig = data["trigger_id"].ToObject<int>();
+                    object d = data["data"].ToObject<Vector3>();
+                    TriggerNetwork.ReceiveRPC(trig, c, d);
+
+
                 }
             } catch (Exception) { }
         }

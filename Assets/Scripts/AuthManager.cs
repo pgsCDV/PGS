@@ -92,10 +92,10 @@ public class AuthManager : MonoBehaviour {
 
     IEnumerator Start() {
         while (true) {
-            if (AuthManager.Instance.IsSocketActive) {
-                AuthManager.Instance.SendWSMsg("{\"cmd\":\"ping\"}");
+            if (IsSocketActive && !string.IsNullOrEmpty(BasicNetworkManager.Instance.CurrentRoomId)) {
+                SendWSMsg("{\"cmd\":\"ping\"}");
             }
-            yield return new WaitForSeconds(3f);
+            yield return new WaitForSeconds(5f);
         }
     }
     [Serializable]
