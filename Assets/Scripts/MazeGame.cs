@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 [System.Serializable]
 public class ServerDataManager {
-    public int seed;
-    public string serverAddress;
+	public int seed;
+	public string serverAddress;
 }
 
 public class MazeGame : MonoBehaviour {

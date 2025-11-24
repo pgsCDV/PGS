@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,9 +30,9 @@ public class PlayerNetwork : MonoBehaviour {
 
             var evt = new Dictionary<string, object> {
                 { "cmd", "sync_position" },
-                { "position_x", (double)pos.x },
-                { "position_y", (double)pos.y },
-                { "position_z", (double)pos.z }
+                { "position_x", pos.x },
+                { "position_y", pos.y },
+                { "position_z", pos.z }
             };
 
             var payload = new Dictionary<string, object> {

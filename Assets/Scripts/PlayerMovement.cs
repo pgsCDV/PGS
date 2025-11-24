@@ -19,10 +19,10 @@ public class PlayerMovement : MonoBehaviour {
 	private bool jumpRequested;
 
 	void Awake() {
-        if (instance == null)
-            instance = this;
-        else Destroy(this);
-    
+		if (instance == null)
+			instance = this;
+		else Destroy(this);
+	
 		rb = GetComponent<Rigidbody>();
 		rb.constraints = RigidbodyConstraints.FreezeRotation;
 	}

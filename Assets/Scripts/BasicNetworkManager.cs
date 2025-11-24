@@ -1,4 +1,4 @@
-﻿// BasicNetworkManager.cs (updated parts: singleton, expose CurrentRoomId, handle incoming room_rpc sync_position)
+﻿// BasicNetworkManager.cs
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -14,8 +14,13 @@ public class BasicNetworkManager : MonoBehaviour {
     string currentRoomId;
     public string CurrentRoomId => currentRoomId;
 
+    // ADDED: Property to hold current location/level ID
+    // 0 = Tutorial, 1 = Level 1, etc.
+    public int CurrentStartLocation { get; private set; } = 0;
+
     public InputField seed;
     public Dropdown side;
+
     public GameObject serverEntryPrefab;
     public Transform contentParent;
     public Dictionary<string, ServerData> serverDict = new();
@@ -26,6 +31,8 @@ public class BasicNetworkManager : MonoBehaviour {
         { WSCmd.CreateRoom, "create_room" },
         { WSCmd.JoinRoom, "join_room" }
     };
+
+    public void SetStartLVL(int lvl) { print(CurrentStartLocation); CurrentStartLocation = lvl; }
 
     void Awake() {
         Instance = this;
@@ -75,6 +82,8 @@ public class BasicNetworkManager : MonoBehaviour {
                 case "create_room":
                     currentRoomId = parsed.RoomId;
                     int joinSide = side != null ? Mathf.Clamp(side.value + 1, 1, 2) : 1;
+
+                    // We also join immediately after creating, location is synced via Create param
                     SendCommand(WSCmd.JoinRoom, new { room_id = currentRoomId, side = joinSide });
                     break;
 
@@ -83,11 +92,21 @@ public class BasicNetworkManager : MonoBehaviour {
                     Debug.Log("Joined room: " + currentRoomId);
 
                     int seedVal = 0;
+
+                    // Reset to default
+                    CurrentStartLocation = 0;
+
                     List<(string uid, int side)> playersToSpawn = new();
 
                     if (parsed.Room != null) {
                         var roomObj = parsed.Room as Dictionary<string, object>;
                         seedVal = roomObj != null && roomObj.ContainsKey("seed") ? Convert.ToInt32(roomObj["seed"]) : 0;
+
+                        // ADDED: Read start_location from server room data
+                        if (roomObj != null && roomObj.ContainsKey("start_location")) {
+                            CurrentStartLocation = Convert.ToInt32(roomObj["start_location"]);
+                            Debug.Log($"[NET] Room Start Location set to: {CurrentStartLocation}");
+                        }
 
                         if (roomObj != null && roomObj.ContainsKey("active_players")) {
                             var act = roomObj["active_players"] as JObject;
@@ -113,6 +132,8 @@ public class BasicNetworkManager : MonoBehaviour {
                     MazeGame.manager = new ServerDataManager {
                         seed = seedVal,
                         serverAddress = currentRoomId
+                        // If ServerDataManager has a field for location, set it here too
+                        // e.g. location = CurrentStartLocation; 
                     };
 
                     StartCoroutine(LoadRoomAndSpawnPlayers(playersToSpawn));
@@ -153,8 +174,6 @@ public class BasicNetworkManager : MonoBehaviour {
                     int trig = data["trigger_id"].ToObject<int>();
                     object d = data["data"].ToObject<Vector3>();
                     TriggerNetwork.ReceiveRPC(trig, c, d);
-
-
                 }
             } catch (Exception) { }
         }
@@ -169,10 +188,26 @@ public class BasicNetworkManager : MonoBehaviour {
         asyncLoad.allowSceneActivation = true;
 
         while (!asyncLoad.isDone) yield return null;
+
+        // Spawn Local Player
         PlayerSpawner.Instance.SpawnLocalPlayer();
+
+        // ADDED: Force position based on start_location if PlayerSpawner doesn't handle it
+        // You should modify PlayerSpawner to read BasicNetworkManager.Instance.CurrentStartLocation
+        // Or we can manually set the position of the player object here if we have a reference.
+        // Assuming PlayerSpawner handles it, or you use GetSpawnPosition() below.
 
         foreach (var p in otherPlayers) {
             PlayerSpawner.Instance.SpawnRemotePlayer(p.uid, p.side);
+        }
+    }
+
+    // ADDED: Helper for your PlayerSpawner to know where to put the player
+    public Vector3 GetSpawnPosition() {
+        switch (CurrentStartLocation) {
+            case 0: return new Vector3(0, 1, 0); // Tutorial Coordinates (CHANGE THESE)
+            case 1: return new Vector3(100, 1, 0); // Level 1 Coordinates (CHANGE THESE)
+            default: return Vector3.zero;
         }
     }
 
@@ -192,10 +227,14 @@ public class BasicNetworkManager : MonoBehaviour {
             int currUsers = roomObj.ContainsKey("curr_users") ? Convert.ToInt32(roomObj["curr_users"]) : 0;
             int maxUsers = roomObj.ContainsKey("max_users") ? Convert.ToInt32(roomObj["max_users"]) : 0;
 
+            // ADDED parsing
+            int sLoc = roomObj.ContainsKey("start_location") ? Convert.ToInt32(roomObj["start_location"]) : 0;
+
             list.Add(new ServerData {
                 uid = roomId,
                 curr_users = currUsers,
-                max_users = maxUsers
+                max_users = maxUsers,
+                start_location = sLoc
             });
         }
 
@@ -213,7 +252,16 @@ public class BasicNetworkManager : MonoBehaviour {
         if (!AuthManager.Instance.IsSocketActive || string.IsNullOrEmpty(seed.text)) return;
         int.TryParse(seed.text, out int parsedSeed);
         int sideVal = side != null ? Mathf.Clamp(side.value + 1, 1, 2) : 1;
-        SendCommand(WSCmd.CreateRoom, new { seed = parsedSeed, side = sideVal });
+
+        // ADDED: Read location from dropdown (0 or 1)
+        int locVal = CurrentStartLocation;
+
+        // Send 'start_location' in the payload
+        SendCommand(WSCmd.CreateRoom, new {
+            seed = parsedSeed,
+            side = sideVal,
+            start_location = locVal
+        });
     }
 
     public void LeaveCurrentRoom() {
@@ -241,7 +289,11 @@ public class BasicNetworkManager : MonoBehaviour {
             serverDict[s.uid] = s;
             var e = Instantiate(serverEntryPrefab, contentParent).transform;
             e.GetChild(1).GetComponent<Text>().text = s.uid;
-            e.GetChild(2).GetComponent<Text>().text = $"{s.curr_users}/{s.max_users}";
+
+            // OPTIONAL: Display map type in text
+            string mapName = s.start_location == 0 ? "Tut" : "Lvl1";
+            e.GetChild(2).GetComponent<Text>().text = $"{s.curr_users}/{s.max_users} [{mapName}]";
+
             string uid = s.uid;
             e.GetChild(3).GetComponent<Button>().onClick.AddListener(() => ConnectToServer(uid));
         }
