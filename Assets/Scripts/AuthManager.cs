@@ -59,8 +59,6 @@ public class NetMessage {
     [JsonProperty("rooms")] public Dictionary<string, object> Rooms;
     [JsonProperty("event")] public string Event;
     [JsonProperty("error")] public string Error;
-
-    // Для player_joined / player_left
     public float PositionX;
     public float PositionY;
     public float PositionZ;
@@ -77,12 +75,14 @@ public class AuthManager : MonoBehaviour {
     string currentUserId;
     public string username;
     WebSocket ws;
-    bool isDestroyed, autoReconnectEnabled = true;
+    bool isDestroyed;
+    bool autoReconnectEnabled = true;
     float reconnectDelay = 4f;
     Coroutine reconnectRoutine;
+    bool lastCloseWasNormal;
 
     public string GetCurrentUserId() => currentUserId;
-    public string SetCurrentUsername(string uid) => username=uid;
+    public string SetCurrentUsername(string uid) => username = uid;
     public bool IsSocketActive => ws != null && ws.State == WebSocketState.Open;
 
     void Awake() {
@@ -98,6 +98,7 @@ public class AuthManager : MonoBehaviour {
             yield return new WaitForSeconds(5f);
         }
     }
+
     [Serializable]
     private class Credentials {
         public string username;
@@ -126,7 +127,13 @@ public class AuthManager : MonoBehaviour {
 
     async void OnDestroy() {
         isDestroyed = true;
-        if (ws != null && ws.State == WebSocketState.Open) await ws.Close();
+        autoReconnectEnabled = false;
+        if (ws != null) {
+            try {
+                await ws.Close();
+            } catch { }
+            ws = null;
+        }
     }
 
     public async void ConnectWebSocket(Action onOpen = null, Action<string> onMessage = null,
@@ -137,10 +144,12 @@ public class AuthManager : MonoBehaviour {
             return;
         }
 
-        if (IsSocketActive) {
-            Debug.Log("[WS] Already connected");
+        if (ws != null && (ws.State == WebSocketState.Open || ws.State == WebSocketState.Connecting)) {
+            Debug.Log("[WS] Already connected or connecting");
             return;
         }
+
+        lastCloseWasNormal = false;
 
         ws = new WebSocket(WsUrl);
 
@@ -150,10 +159,16 @@ public class AuthManager : MonoBehaviour {
             onOpen?.Invoke();
 
             var payload = new UserIdPayload { user_id = GetCurrentUserId() };
-            ws.SendText(JsonConvert.SerializeObject(payload));
+            try {
+                ws.SendText(JsonConvert.SerializeObject(payload));
+            } catch (Exception e) {
+                Debug.LogError($"[WS] Send after open failed: {e.Message}");
+            }
 
             if (reconnectRoutine != null) {
-                StopCoroutine(reconnectRoutine);
+                try {
+                    StopCoroutine(reconnectRoutine);
+                } catch { }
                 reconnectRoutine = null;
             }
         };
@@ -169,14 +184,33 @@ public class AuthManager : MonoBehaviour {
             if (isDestroyed) return;
             Debug.LogError($"[WS] Error: {err}");
             onError?.Invoke(err);
-            if (autoReconnectEnabled && Application.isPlaying) TryReconnect(onOpen, onMessage, onError, onClose);
+            if (autoReconnectEnabled && Application.isPlaying && !lastCloseWasNormal) {
+                TryReconnect(onOpen, onMessage, onError, onClose);
+            }
         };
 
         ws.OnClose += (code) => {
             if (isDestroyed) return;
             Debug.Log($"[WS] Closed: {code}");
             onClose?.Invoke(code);
-            if (autoReconnectEnabled && Application.isPlaying) TryReconnect(onOpen, onMessage, onError, onClose);
+
+            if (code == WebSocketCloseCode.Normal) {
+                lastCloseWasNormal = true;
+                try {
+                    if (reconnectRoutine != null) {
+                        StopCoroutine(reconnectRoutine);
+                        reconnectRoutine = null;
+                    }
+                } catch { }
+                ws = null;
+                return;
+            }
+
+            ws = null;
+
+            if (autoReconnectEnabled && Application.isPlaying && !lastCloseWasNormal) {
+                TryReconnect(onOpen, onMessage, onError, onClose);
+            }
         };
 
         try {
@@ -184,24 +218,34 @@ public class AuthManager : MonoBehaviour {
             await ws.Connect();
         } catch (Exception e) {
             Debug.LogError($"[WS] Connection failed: {e.Message}");
-            if (autoReconnectEnabled && Application.isPlaying) TryReconnect(onOpen, onMessage, onError, onClose);
+            if (autoReconnectEnabled && Application.isPlaying && !lastCloseWasNormal) {
+                TryReconnect(onOpen, onMessage, onError, onClose);
+            }
         }
     }
 
     void TryReconnect(Action onOpen, Action<string> onMessage, Action<string> onError, Action<WebSocketCloseCode> onClose) {
+        if (lastCloseWasNormal) return;
         if (reconnectRoutine == null) reconnectRoutine = StartCoroutine(ReconnectCoroutine(onOpen, onMessage, onError, onClose));
     }
 
     IEnumerator ReconnectCoroutine(Action onOpen, Action<string> onMessage, Action<string> onError, Action<WebSocketCloseCode> onClose) {
         Debug.Log($"[WS] Attempting reconnect in {reconnectDelay}s...");
         yield return new WaitForSeconds(reconnectDelay);
-        if (!isDestroyed && Application.isPlaying) ConnectWebSocket(onOpen, onMessage, onError, onClose);
+        if (!isDestroyed && Application.isPlaying && !lastCloseWasNormal) {
+            ConnectWebSocket(onOpen, onMessage, onError, onClose);
+        }
+        reconnectRoutine = null;
     }
 
     public async void SendWSMsg(string message) {
         if (ws != null && ws.State == WebSocketState.Open) {
             Debug.Log($"[WS] {Time.time} {Time.frameCount} | Sent: {message}");
-            await ws.SendText(message);
+            try {
+                await ws.SendText(message);
+            } catch (Exception e) {
+                Debug.LogError($"[WS] Send failed: {e.Message}");
+            }
         }
         else {
             Debug.LogWarning("[WS] Not connected — message not sent");
@@ -210,10 +254,21 @@ public class AuthManager : MonoBehaviour {
 
     public async void CloseWS() {
         if (ws != null) {
+            lastCloseWasNormal = true;
             Debug.Log("[WS] Closing connection...");
-            await ws.Close();
+            try {
+                await ws.Close();
+            } catch (Exception e) {
+                Debug.LogError($"[WS] Close failed: {e.Message}");
+            }
             ws = null;
         }
+    }
+
+    public void CloseGame() {
+        CloseWS();
+        Application.Quit();
+        SendWSMsg("{\"cmd\":\"ping\"}");
     }
 
     private void OnDisable() {
