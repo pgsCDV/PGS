@@ -14,7 +14,7 @@ public class ButtonScript : MonoBehaviour
         {
             isPressed = true;
             StartCoroutine(OpenDoorsSmooth());
-            Debug.Log("Przycisk wci?ni?ty! Drzwi si? otwieraj? p?ynnie.");
+            Debug.Log("Działa");
         }
     }
 
