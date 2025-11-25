@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.SceneManager;
+using UnityEngine.SceneManagement;
 
 public class lava : MonoBehaviour
 {
