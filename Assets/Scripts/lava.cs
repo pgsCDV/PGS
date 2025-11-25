@@ -6,8 +6,7 @@ public class lava : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            debug.log("Gracz umar");
-            Destroy(other.gameObject);
+            SceneManager.LoadScene(SceneManager.GetActivateScene().name);
         }
     }
 }
