@@ -177,7 +177,7 @@ public class AuthManager : MonoBehaviour {
 		ws.OnMessage += (bytes) => {
 			if (isDestroyed) return;
 			string msg = Encoding.UTF8.GetString(bytes);
-			Debug.Log($"[WS] {Time.time} {Time.frameCount} | Received: {msg}");
+			//Debug.Log($"[WS] {Time.time} {Time.frameCount} | Received: {msg}");
 			onMessage?.Invoke(msg);
 		};
 
@@ -241,7 +241,7 @@ public class AuthManager : MonoBehaviour {
 
 	public async void SendWSMsg(string message) {
 		if (ws != null && ws.State == WebSocketState.Open) {
-			Debug.Log($"[WS] {Time.time} {Time.frameCount} | Sent: {message}");
+			//Debug.Log($"[WS] {Time.time} {Time.frameCount} | Sent: {message}");
 			try {
 				await ws.SendText(message);
 			} catch (Exception e) {
