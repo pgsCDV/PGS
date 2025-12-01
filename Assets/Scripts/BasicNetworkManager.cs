@@ -125,7 +125,7 @@ public class BasicNetworkManager : MonoBehaviour {
 
 					MazeGame.manager = new ServerDataManager {
 						seed = seedVal,
-						serverAddress = currentRoomId
+						roomID = currentRoomId
 					};
 
 					StartCoroutine(LoadRoomAndSpawnPlayers(playersToSpawn));

@@ -216,7 +216,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   walkSpeed: 5
-  jumpForce: 15
+  jumpForce: 5
   airControl: 0.5
   groundCheck: {fileID: 3575160816266671413}
   groundDistance: 0.1
